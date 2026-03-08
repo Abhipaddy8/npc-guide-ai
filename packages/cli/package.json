@@ -12,7 +12,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@npc-guide/core": "*"
+    "npc-guide": "*"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

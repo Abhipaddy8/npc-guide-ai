@@ -10,8 +10,8 @@ import {
   getCurrentMission,
   formatInstructionForAgent,
   generateInstruction,
-} from '@npc-guide/core';
-import type { LLMProvider } from '@npc-guide/core';
+} from 'npc-guide';
+import type { LLMProvider } from 'npc-guide';
 
 // ── Load .env manually (no dotenv dependency) ──────────────
 function loadEnv() {

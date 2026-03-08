@@ -13,7 +13,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@npc-guide/core": "*",
+    "npc-guide": "*",
     "@modelcontextprotocol/sdk": "^1.0.0"
   },
   "devDependencies": {

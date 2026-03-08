@@ -3,3 +3,6 @@ dist/
 *.tsbuildinfo
 .env
 .DS_Store
+
+# NPC Guide — sessions are local, everything else is shared
+.ai-guide/sessions/

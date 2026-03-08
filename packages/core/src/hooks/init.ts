@@ -19,7 +19,10 @@ import { MemorySystem } from '../memory/index.js';
 import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.cwd();
-const brief = process.argv.slice(2).join(' ');
+// Strip the "init" subcommand if present
+const rawArgs = process.argv.slice(2);
+const args = rawArgs[0] === 'init' ? rawArgs.slice(1) : rawArgs;
+const brief = args.join(' ');
 
 async function init() {
   if (!brief) {

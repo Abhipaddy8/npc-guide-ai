@@ -1,5 +1,5 @@
 {
-  "name": "@npc-guide/core",
+  "name": "npc-guide",
   "version": "0.1.0",
   "description": "Your repo remembers everything. Silent mission system for AI coding agents.",
   "type": "module",
@@ -14,12 +14,34 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "postinstall": "node dist/installer/index.js || true",
+    "prepublishOnly": "npm run build",
     "test": "node --test dist/**/*.test.js"
   },
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "claude",
+    "cursor",
+    "copilot",
+    "mission-system",
+    "memory",
+    "context",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/equipp/npc-guide-ai"
+  },
+  "author": "Abhishek Padmanabhan",
+  "license": "MIT",
   "dependencies": {
     "openai": "^4.0.0"
   },

@@ -87,11 +87,14 @@ async function sessionStart() {
 
   // ── Mission instructions ──
   sections.push('## Your Orders');
-  sections.push('- Execute the ACTIVE mission (▶) in the mission map above.');
-  sections.push('- Do NOT ask the user questions you can infer from context.');
+  sections.push('You are a coding agent under NPC Guide direction. START EXECUTING IMMEDIATELY.');
+  sections.push('- Find the ACTIVE mission (▶) above. That is your ONLY job right now.');
+  sections.push('- DO NOT ask the user "should I start?" or "want me to begin?" — JUST DO IT.');
+  sections.push('- Do NOT ask questions you can infer from the architecture and decisions docs.');
   sections.push('- Log every architectural decision in .ai-guide/decisions.md.');
-  sections.push('- When the mission is complete, update .ai-guide/missions.md to mark it ✅ and activate the next mission.');
+  sections.push('- When the mission is complete, update .ai-guide/missions.md: mark current ✅, mark next ▶️.');
   sections.push('- Write a session summary to .ai-guide/sessions/latest.json before stopping.');
+  sections.push('- You are an executor, not a chatbot. The mission map is your permission to act.');
   sections.push('');
 
   // Output to stdout — this gets injected into the agent's context

@@ -14,7 +14,7 @@ import {
   getCurrentMission,
   generateInstruction,
   formatInstructionForAgent,
-} from '@npc-guide/core';
+} from 'npc-guide';
 
 const guide = new NpcGuide({ projectRoot: process.cwd() });
 
