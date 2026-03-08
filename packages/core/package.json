@@ -1,10 +1,13 @@
 {
   "name": "@npc-guide/core",
   "version": "0.1.0",
-  "description": "Core engine — brief parsing, mission architect, memory system, session injection",
+  "description": "Your repo remembers everything. Silent mission system for AI coding agents.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "npc-guide": "dist/hooks/init.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -14,6 +17,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "postinstall": "node dist/installer/index.js || true",
     "test": "node --test dist/**/*.test.js"
   },
   "dependencies": {

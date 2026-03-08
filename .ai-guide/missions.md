@@ -1,50 +1,51 @@
 # Mission Map
 
 **Project**: npc-guide-ai
+**Intent**: strategy
 **Total Missions**: 6
-**Current**: Mission 1
+**Current**: Mission 2
 
-- ▶️ **1 — Foundation** — Scaffold project structure, install dependencies, configure tooling
-    - Create a new npm project with TypeScript support
-    - Install necessary dependencies: commander
-    - Configure tsconfig.json with appropriate compiler options
-    - Create a basic CLI entry point in src/index.ts using Commander.js
-    - Set up a basic file structure: src, tests, config
-    - Create a basic README.md outlining the project's purpose
-- 🔒 **2 — Core Loop** — Build the primary feature that defines the product
-    - Implement core CLI functionality for generating NPC guides
-    - Design visually appealing and shareable CLI output
-    - Develop an onboarding experience that showcases core features
-    - Implement user progress tracking within the CLI
-    - Craft a compelling README highlighting the tool's value proposition
-    - Implement a mechanism for users to easily share results on social media
-- 🔒 **3 — Identity** — Implement authentication and authorization
-    - Install Passport.js for authentication
-    - Configure local authentication strategy with username/password
-    - Create user model with necessary fields (username, password, etc.)
-    - Implement user registration and login endpoints
-    - Implement middleware for protected routes
-    - Define user roles and permissions for authorization
-    - Create API endpoints for accessing user profile information
-- 🔒 **4 — Integration** — Connect all layers, wire APIs, handle data flow
-    - Implement API endpoint for NPC data retrieval
-    - Connect the frontend to the NPC data API
-    - Implement data flow from API to UI components
-    - Implement user input handling and API request triggers
-    - Add error handling for API requests and data processing
-    - Implement progress tracking and display in the UI
-- 🔒 **5 — Edge Cases** — Error handling, validation, edge case coverage
-    - Implement input validation for all CLI arguments
-    - Create error handling middleware for unexpected exceptions
-    - Add logging for debugging and monitoring
-    - Implement rate limiting to prevent abuse
-    - Write unit tests to cover edge cases and error conditions
-    - Create custom error messages for common failure scenarios
-- 🔒 **6 — Ship** — Build config, deployment setup, final checks
-    - Create comprehensive README.md outlining features, usage, and contribution guidelines
-    - Configure deployment pipeline for automated releases
-    - Implement a mechanism for users to share their results on social media
-    - Set up a basic community forum or discussion platform
-    - Add a progress tracking system to visualize user value over time
-    - Identify and document potential paid features for future development
-    - Write a contribution guide for open-source contributions
+- ✅ **1 — Landscape** — Map the current state — what exists, who the users are, what the market looks like
+    - Define 3-5 target developer personas with specific needs and pain points.
+    - Research existing solutions and identify gaps in the market.
+    - Develop a value proposition that addresses the identified developer needs.
+    - Create a positioning statement that differentiates the product from competitors.
+    - Outline a user onboarding flow to demonstrate immediate value.
+    - Identify potential retention hooks to encourage continued usage.
+    - Brainstorm potential monetization models aligned with developer needs.
+- ▶️ **2 — Positioning** — Define what makes this different — the angle, the story, the one-liner that lands
+    - Define 3-5 target developer personas and their specific needs.
+    - Develop a concise value proposition for each persona.
+    - Craft a primary positioning statement highlighting the unique value.
+    - Design a one-liner that captures the essence of the product.
+    - Outline key differentiators from existing solutions.
+    - Create a table summarizing personas, needs, value propositions, and positioning.
+- 🔒 **3 — Growth Engine** — Design the organic discovery and virality mechanics — how users find and share this
+    - Define target developer personas and their specific needs.
+    - Develop a compelling value proposition and positioning statement.
+    - Outline a strategy for organic discovery through content marketing, SEO, and community engagement.
+    - Develop a plan for virality through integrations, partnerships, and referral programs.
+    - Design community mechanics to foster collaboration and knowledge sharing among developers.
+- 🔒 **4 — Retention & Stickiness** — Design the hooks that make users come back — compounding value, habits, switching costs
+    - Define initial set of retention hooks based on target developer personas and needs.
+    - Create a data structure to represent retention hooks, including type, trigger, and reward.
+    - Implement the first retention hook: a daily summary of new or updated NPC data.
+    - Implement a second retention hook: personalized recommendations based on user activity.
+    - Add logging to track the effectiveness of each retention hook.
+    - Create a basic A/B testing framework to compare different retention hook variations.
+    - Document the implemented retention hooks and their configuration options.
+- 🔒 **5 — Monetization** — Define free vs paid, pricing model, revenue mechanics
+    - Define target developer personas and their specific needs for free and paid features.
+    - Develop a value proposition for both free and paid tiers, highlighting the benefits of each.
+    - Design a pricing model (e.g., subscription, usage-based) that aligns with developer needs and project goals.
+    - Outline the specific features available in the free tier to attract users.
+    - Define the enhanced features and benefits offered in the paid tier to incentivize upgrades.
+    - Create a revenue projection model based on the chosen pricing strategy and projected user adoption.
+    - Document the mechanics for handling payments, subscriptions, and potential refunds.
+- 🔒 **6 — Launch Plan** — Concrete launch sequence — channels, timing, assets needed, first 100 users
+    - Define target developer personas and their specific needs
+    - Develop a compelling value proposition and positioning statement
+    - Outline a strategy for organic discovery through content marketing, SEO, and community engagement
+    - Design an onboarding flow that demonstrates immediate value and reduces friction
+    - Identify and implement retention hooks to encourage continued usage
+    - Develop a plan for virality through integrations, partnerships, and referral programs

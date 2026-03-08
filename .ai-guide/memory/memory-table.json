@@ -6,7 +6,7 @@
       "id": "cd6d59a5-e697-43bd-a711-900e3d1125ce",
       "content": "Project: s an npm package that sits between the user and any coding agent (Claude Code, Cursor, Copilot). It intercepts the user. Stack: Go/null. DB: null",
       "category": "architecture",
-      "sessionsActive": 2,
+      "sessionsActive": 6,
       "cosineSimilarityHits": 0,
       "status": "new",
       "createdAt": "2026-03-08T16:23:53.751Z",
@@ -16,10 +16,80 @@
       "id": "96e08cc7-bcd0-46f7-9185-957f846ceea9",
       "content": "Project: npc-guide-ai. Stack: TypeScript/null. DB: null",
       "category": "architecture",
-      "sessionsActive": 1,
+      "sessionsActive": 5,
       "cosineSimilarityHits": 0,
       "status": "new",
       "createdAt": "2026-03-08T16:26:29.682Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "65961171-c52b-479e-ab7a-a5e5ccc480b9",
+      "content": "Project: npc-guide-ai-growth. Stack: /null. DB: null",
+      "category": "architecture",
+      "sessionsActive": 4,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:36:41.339Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "a7d9b0d2-5653-463b-8ebb-ce03b2fb4f67",
+      "content": "Project: npc-guide-ai. Stack: /null. DB: null",
+      "category": "architecture",
+      "sessionsActive": 3,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:38:22.448Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "4020e12a-fde9-4d56-b910-494ca9922858",
+      "content": "Project: npc-guide-ai. Stack: /null. DB: null",
+      "category": "architecture",
+      "sessionsActive": 2,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:39:27.085Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "54ee2862-fdbd-40ba-ac0b-4ba9016f43fc",
+      "content": "Agent-agnostic positioning: Works with Claude Code, Cursor, Copilot — not locked to one IDE. Wider TAM.",
+      "category": "decision",
+      "sessionsActive": 1,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:39:27.089Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "10ac2e58-5ad3-4f63-b64c-096cc1a6db58",
+      "content": "5 target personas identified: Solo Builder, Agency Dev, Team Lead, AI-Native Dev, Vibe Coder — each with distinct pain points",
+      "category": "decision",
+      "sessionsActive": 1,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:39:27.090Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "f9b936ba-f0f4-458f-b54f-c0ad10a4819c",
+      "content": ".ai-guide folder is the distribution mechanism: Gets committed to git, discovered by anyone who clones the repo — built-in virality",
+      "category": "decision",
+      "sessionsActive": 1,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:39:27.090Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "09fd68d5-a379-46cc-8ed9-058ad3f99bd3",
+      "content": "Mission 1 complete: Mapped competitive landscape (8 tools analyzed). Identified 5 developer personas. Defined core value prop: memory that earns its place + intent-aware missions + agent-agnostic. Key insight: .ai-guide/ folder committed to git IS the viral distribution mechanism.",
+      "category": "progress",
+      "sessionsActive": 1,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:39:27.091Z",
       "lastHitAt": null
     }
   ]
