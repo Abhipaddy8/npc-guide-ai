@@ -1,0 +1,21 @@
+{
+  "name": "npc-guide-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Your repo remembers everything. Your AI never starts from zero.",
+  "workspaces": [
+    "packages/core",
+    "packages/claude-code",
+    "packages/cli"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspace=packages/core",
+    "test": "npm run test --workspaces",
+    "clean": "rm -rf packages/*/dist"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@npc-guide/cli",
+  "version": "0.1.0",
+  "description": "Terminal entry point for NPC Guide",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "npc-guide": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@npc-guide/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
