@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "windowSize": 15,
+  "items": [
+    {
+      "id": "cd6d59a5-e697-43bd-a711-900e3d1125ce",
+      "content": "Project: s an npm package that sits between the user and any coding agent (Claude Code, Cursor, Copilot). It intercepts the user. Stack: Go/null. DB: null",
+      "category": "architecture",
+      "sessionsActive": 2,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:23:53.751Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "96e08cc7-bcd0-46f7-9185-957f846ceea9",
+      "content": "Project: npc-guide-ai. Stack: TypeScript/null. DB: null",
+      "category": "architecture",
+      "sessionsActive": 1,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-08T16:26:29.682Z",
+      "lastHitAt": null
+    }
+  ]
+}

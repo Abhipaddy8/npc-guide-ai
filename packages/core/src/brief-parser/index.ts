@@ -1,4 +1,4 @@
-import { ParsedBrief, InferredStack } from '../types.js';
+import { ParsedBrief, InferredStack, BriefIntent } from '../types.js';
 
 const STACK_SIGNALS: Record<string, Partial<InferredStack>> = {
   'react': { framework: 'React' },
@@ -28,11 +28,21 @@ const STACK_SIGNALS: Record<string, Partial<InferredStack>> = {
   'anthropic': { extras: ['Anthropic'] },
 };
 
+const INTENT_SIGNALS: Record<BriefIntent, string[]> = {
+  build: ['build', 'create', 'implement', 'develop', 'scaffold', 'make an app', 'make a tool', 'code'],
+  strategy: ['strategy', 'growth', 'viral', 'sticky', 'monetiz', 'gtm', 'go-to-market', 'positioning', 'retention', 'acquisition', 'funnel', 'product-market'],
+  research: ['research', 'investigate', 'compare', 'analyze', 'find out', 'what are the', 'landscape', 'competitor'],
+  design: ['architect', 'system design', 'api design', 'data model', 'schema design', 'design the'],
+  content: ['write', 'draft', 'deck', 'presentation', 'readme', 'documentation', 'blog post', 'copy'],
+  ops: ['deploy', 'ci/cd', 'pipeline', 'infrastructure', 'monitoring', 'devops', 'docker', 'kubernetes'],
+  debug: ['fix', 'bug', 'broken', 'error', 'crash', 'not working', 'debug', 'diagnose'],
+};
+
 export function parseBrief(raw: string): ParsedBrief {
   const lower = raw.toLowerCase();
-  const words = lower.split(/\s+/);
 
-  const stack = inferStack(lower);
+  const intent = inferIntent(lower);
+  const stack = intent === 'build' ? inferStack(lower) : emptyStack();
   const features = extractFeatures(raw);
   const complexity = inferComplexity(features, stack);
   const projectName = inferProjectName(raw);
@@ -41,10 +51,49 @@ export function parseBrief(raw: string): ParsedBrief {
     raw,
     projectName,
     description: raw.slice(0, 200),
+    intent,
     stack,
     complexity,
     features,
     constraints: extractConstraints(raw),
+  };
+}
+
+function inferIntent(text: string): BriefIntent {
+  const scores: Record<BriefIntent, number> = {
+    build: 0, strategy: 0, research: 0, design: 0, content: 0, ops: 0, debug: 0,
+  };
+
+  for (const [intent, signals] of Object.entries(INTENT_SIGNALS)) {
+    for (const signal of signals) {
+      if (text.includes(signal)) {
+        scores[intent as BriefIntent] += 1;
+      }
+    }
+  }
+
+  // Find highest score
+  let best: BriefIntent = 'build';
+  let bestScore = 0;
+  for (const [intent, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      best = intent as BriefIntent;
+    }
+  }
+
+  return best;
+}
+
+function emptyStack(): InferredStack {
+  return {
+    language: '',
+    framework: null,
+    database: null,
+    auth: null,
+    styling: null,
+    deployment: null,
+    extras: [],
   };
 }
 
@@ -80,6 +129,7 @@ function extractFeatures(text: string): string[] {
     /(?:build|create|make|add|implement|need|want)\s+(?:a\s+)?(.+?)(?:\.|,|$)/gi,
     /(?:should|must|needs to)\s+(.+?)(?:\.|,|$)/gi,
     /(?:with|including|plus)\s+(.+?)(?:\.|,|$)/gi,
+    /[-•]\s+(.+?)(?:\n|$)/g,
   ];
 
   for (const pattern of featurePatterns) {
@@ -124,15 +174,12 @@ function inferComplexity(features: string[], stack: InferredStack): 'simple' | '
 }
 
 function inferProjectName(text: string): string {
-  // Try to find a quoted name
   const quoted = text.match(/["']([^"']+)["']/);
   if (quoted) return quoted[1];
 
-  // Try "called X" or "named X"
   const named = text.match(/(?:called|named)\s+(\S+)/i);
   if (named) return named[1];
 
-  // Fall back to first few meaningful words
   const words = text.split(/\s+/).filter(w => w.length > 2).slice(0, 3);
   return words.join('-').toLowerCase().replace(/[^a-z0-9-]/g, '') || 'project';
 }

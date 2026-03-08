@@ -57,6 +57,7 @@ export class DocWriter {
       '# Mission Map',
       '',
       `**Project**: ${map.projectName}`,
+      `**Intent**: ${map.intent}`,
       `**Total Missions**: ${map.totalMissions}`,
       `**Current**: Mission ${map.currentMission}`,
       '',

@@ -1,9 +1,19 @@
 // === Brief ===
 
+export type BriefIntent =
+  | 'build'       // Build a codebase / app / feature
+  | 'strategy'    // Product strategy, growth, GTM, positioning
+  | 'research'    // Investigate, analyze, compare options
+  | 'design'      // Architecture, system design, API design
+  | 'content'     // Writing, docs, decks, copy
+  | 'ops'         // DevOps, CI/CD, infra, deployment
+  | 'debug';      // Fix a bug, diagnose an issue
+
 export interface ParsedBrief {
   raw: string;
   projectName: string;
   description: string;
+  intent: BriefIntent;
   stack: InferredStack;
   complexity: 'simple' | 'moderate' | 'complex';
   features: string[];
@@ -23,6 +33,7 @@ export interface InferredStack {
 // === Missions ===
 
 export type MissionType =
+  // Build missions
   | 'scaffold'
   | 'core-loop'
   | 'data-layer'
@@ -30,7 +41,40 @@ export type MissionType =
   | 'ui'
   | 'integration'
   | 'edge-cases'
-  | 'ship';
+  | 'ship'
+  // Strategy missions
+  | 'landscape'
+  | 'positioning'
+  | 'growth-engine'
+  | 'retention'
+  | 'monetization'
+  | 'launch-plan'
+  // Research missions
+  | 'define-scope'
+  | 'gather'
+  | 'analyze'
+  | 'synthesize'
+  | 'recommend'
+  // Design missions
+  | 'requirements'
+  | 'system-map'
+  | 'interface-design'
+  | 'validation'
+  // Content missions
+  | 'outline'
+  | 'draft'
+  | 'polish'
+  | 'distribute'
+  // Ops missions
+  | 'audit'
+  | 'implement'
+  | 'test-verify'
+  | 'rollout'
+  // Debug missions
+  | 'reproduce'
+  | 'isolate'
+  | 'fix'
+  | 'verify-fix';
 
 export type MissionStatus = 'locked' | 'active' | 'complete' | 'skipped';
 
@@ -46,6 +90,7 @@ export interface Mission {
 
 export interface MissionMap {
   projectName: string;
+  intent: BriefIntent;
   totalMissions: number;
   missions: Mission[];
   currentMission: number;

@@ -1,33 +1,50 @@
-import { ParsedBrief, InferredStack } from '../types.js';
+import { ParsedBrief, InferredStack, BriefIntent } from '../types.js';
 
-const SYSTEM_PROMPT = `You are a game director reading a project brief. Your job is to infer EVERYTHING the developer needs without asking questions.
+const SYSTEM_PROMPT = `You are a game director reading a brief. Your FIRST job is to understand WHAT KIND of brief this is — not everything is a coding project.
 
-Analyze the brief and return a JSON object with this exact structure:
+STEP 1: Detect the intent. Read the brief and classify it:
+- "build" → They want to BUILD software (app, feature, tool, package)
+- "strategy" → They want STRATEGY (growth, GTM, positioning, virality, business model)
+- "research" → They want RESEARCH (investigate, compare, analyze options, market analysis)
+- "design" → They want DESIGN (architecture, system design, API design, data modeling)
+- "content" → They want CONTENT (writing, docs, decks, copy, README)
+- "ops" → They want OPS (DevOps, CI/CD, infra, deployment, monitoring)
+- "debug" → They want to FIX something (bug, issue, error, broken behavior)
+
+STEP 2: Parse based on intent.
+
+Return a JSON object with this exact structure:
 {
+  "intent": "build" | "strategy" | "research" | "design" | "content" | "ops" | "debug",
   "projectName": "kebab-case-name",
-  "description": "one sentence summary",
+  "description": "one sentence summary of what they actually want",
   "stack": {
-    "language": "TypeScript" or other,
+    "language": "TypeScript" or other or null (null if not a code project),
     "framework": "Next.js" or null,
     "database": "Supabase" or null,
     "auth": "Supabase Auth" or null,
     "styling": "Tailwind CSS" or null,
     "deployment": "Vercel" or null,
-    "extras": ["Stripe", "OpenAI"]
+    "extras": ["Stripe", "OpenAI"] or []
   },
   "complexity": "simple" | "moderate" | "complex",
-  "features": ["feature 1", "feature 2", ...],
+  "features": ["specific actionable deliverable 1", "deliverable 2", ...],
   "constraints": ["constraint 1", ...]
 }
 
-Rules:
-- Infer stack from context clues. If they say "modern web app" → Next.js + TypeScript + Tailwind.
-- If they mention payments → add Stripe to extras.
-- If they mention users/login/signup → infer auth provider from stack.
-- If no database mentioned but features imply data → infer the most natural DB for the stack.
-- Features should be specific, actionable items — not vague descriptions.
-- Constraints are things the user explicitly does NOT want.
-- complexity: simple (landing page, static site), moderate (CRUD app, dashboard), complex (multi-tenant SaaS, real-time, marketplace)
+CRITICAL RULES:
+- The "features" field means different things per intent:
+  - build → features to implement
+  - strategy → strategic objectives to address
+  - research → questions to answer
+  - design → components to design
+  - content → pieces to create
+  - ops → systems to set up
+  - debug → symptoms to investigate
+- For non-build intents, stack fields can all be null. That's fine.
+- Do NOT force a coding stack onto a strategy/research/content brief.
+- Features should be SPECIFIC and ACTIONABLE — not vague restatements of the brief.
+- constraints = things the user explicitly does NOT want.
 - ONLY return the JSON. No markdown, no explanation.`;
 
 export interface LLMProvider {
@@ -37,14 +54,16 @@ export interface LLMProvider {
 export class OpenAIProvider implements LLMProvider {
   private apiKey: string;
   private model: string;
+  private baseUrl: string;
 
-  constructor(apiKey: string, model: string = 'gpt-4o-mini') {
+  constructor(apiKey: string, model: string = 'gpt-4o-mini', baseUrl: string = 'https://api.openai.com/v1') {
     this.apiKey = apiKey;
     this.model = model;
+    this.baseUrl = baseUrl;
   }
 
   async complete(systemPrompt: string, userPrompt: string): Promise<string> {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,12 +76,11 @@ export class OpenAIProvider implements LLMProvider {
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.3,
-        response_format: { type: 'json_object' },
       }),
     });
 
     if (!res.ok) {
-      throw new Error(`OpenAI API error: ${res.status} ${await res.text()}`);
+      throw new Error(`LLM API error: ${res.status} ${await res.text()}`);
     }
 
     const data = await res.json() as any;
@@ -107,16 +125,18 @@ export class AnthropicProvider implements LLMProvider {
 export async function parseBriefWithLLM(raw: string, provider: LLMProvider): Promise<ParsedBrief> {
   const response = await provider.complete(SYSTEM_PROMPT, raw);
 
-  // Strip markdown code fences if present
   const cleaned = response.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
   const parsed = JSON.parse(cleaned);
+
+  const intent: BriefIntent = parsed.intent || 'build';
 
   return {
     raw,
     projectName: parsed.projectName || 'project',
     description: parsed.description || raw.slice(0, 200),
+    intent,
     stack: {
-      language: parsed.stack?.language || 'TypeScript',
+      language: parsed.stack?.language || (intent === 'build' ? 'TypeScript' : ''),
       framework: parsed.stack?.framework || null,
       database: parsed.stack?.database || null,
       auth: parsed.stack?.auth || null,
