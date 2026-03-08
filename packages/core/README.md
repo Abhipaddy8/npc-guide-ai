@@ -1,61 +1,57 @@
 # npc-guide
 
-Your repo remembers everything. Your AI never starts from zero.
+**Your repo remembers everything. Your AI never starts from zero.**
 
-Silent mission system that installs into any AI coding agent (Claude Code, Cursor, Copilot). Intercepts your brief, structures it into missions, directs the agent autonomously, and remembers everything across sessions.
+Silent mission system that turns AI coding agents (Claude Code, Cursor, Copilot) into autonomous executors. Install it, give it a brief, and your agent stops asking questions and starts building.
 
-## Install
-
-```bash
-npm install npc-guide
-```
-
-This silently creates `.ai-guide/`, wires Claude Code hooks, writes `CLAUDE.md` and `.cursorrules`. No config needed.
-
-## Initialize
+## Quick Start
 
 ```bash
+# Install (silent — creates .ai-guide/, CLAUDE.md, hooks automatically)
+npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.1.0/npc-guide-0.1.0.tgz
+
+# Initialize with your brief
 npx npc-guide init "Build a SaaS dashboard with Next.js and Supabase"
+
+# Open your coding agent and type "go"
 ```
 
-This parses your brief, detects intent, and generates a mission map.
+That's it. The agent reads the mission map and executes autonomously.
 
-## Then just open your coding agent
+## What It Does
 
-The agent reads `.ai-guide/missions.md`, finds the active mission, and starts executing. No interaction needed.
+1. **Silent install** — postinstall creates `.ai-guide/`, wires Claude Code hooks, writes `CLAUDE.md` and `.cursorrules`
+2. **Brief parsing** — detects intent (build, strategy, research, debug, etc.) and generates a mission map
+3. **Agent direction** — your agent reads the missions and executes without asking questions
+4. **Session memory** — every session is archived, every decision logged, agent picks up where it left off
 
 ## 7 Intent Types
 
-| Intent | What it does |
+| Intent | Mission Sequence |
 |---|---|
-| build | Scaffold → Core Loop → Data → Auth → UI → Integration → Ship |
-| strategy | Landscape → Positioning → Growth → Retention → Monetization → Launch |
-| research | Scope → Gather → Analyze → Synthesize → Recommend |
-| design | Requirements → System Map → Interface → Validation |
-| content | Outline → Draft → Polish → Distribute |
-| ops | Audit → Implement → Test → Rollout |
-| debug | Reproduce → Isolate → Fix → Verify |
+| **build** | Foundation → Core Loop → Data → Auth → UI → Integration → Ship |
+| **strategy** | Landscape → Positioning → Growth → Retention → Monetization → Launch |
+| **research** | Scope → Gather → Analyze → Synthesize → Recommend |
+| **design** | Requirements → System Map → Interface → Validation |
+| **content** | Outline → Draft → Polish → Distribute |
+| **ops** | Audit → Implement → Test → Rollout |
+| **debug** | Reproduce → Isolate → Fix → Verify |
 
-## How it works
+## Agent Support
 
-```
-npm install npc-guide       → postinstall creates .ai-guide/, hooks, CLAUDE.md
-npx npc-guide init "brief"  → parses brief, generates mission map
-[open coding agent]          → agent reads missions, executes autonomously
-[close terminal]             → session archived
-[reopen]                     → agent picks up where it left off
-```
+| Agent | Integration |
+|---|---|
+| **Claude Code** | SessionStart/End hooks + CLAUDE.md (full lifecycle) |
+| **Cursor** | .cursorrules |
+| **Copilot / Others** | CLAUDE.md (any agent that reads project markdown) |
 
-## What gets created
+## No API Required
 
-```
-.ai-guide/
-├── architecture.md      — Stack, features, file structure
-├── missions.md          — Mission map with status tracking
-├── decisions.md         — Every architectural decision
-├── sessions/            — Session summaries for continuity
-└── memory/              — Scored memory items
-```
+Default parser is pure regex — works offline, instantly. LLM parsing (OpenAI/Anthropic/OpenRouter) is optional for richer results.
+
+## Docs
+
+Full documentation, architecture, and live test results: [github.com/Abhipaddy8/npc-guide-ai](https://github.com/Abhipaddy8/npc-guide-ai)
 
 ## License
 
