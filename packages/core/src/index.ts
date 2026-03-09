@@ -8,6 +8,8 @@ export { MemorySystem } from './memory/index.js';
 export { cosineSimilarity, searchMemories, OpenAIEmbeddings } from './memory/embeddings.js';
 export type { EmbeddingProvider, ScoredMemory } from './memory/embeddings.js';
 export { DocWriter } from './memory/doc-writer.js';
+export { scanProject, formatScanOutput } from './project-scanner/index.js';
+export type { ProjectScan } from './project-scanner/index.js';
 export { SessionInjector } from './session-injector/index.js';
 export { generateInstruction, formatInstructionForAgent } from './agent-instructor/index.js';
 
