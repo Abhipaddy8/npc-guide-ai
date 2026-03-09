@@ -2,13 +2,13 @@
 
 **Your repo remembers everything. Your AI never starts from zero.**
 
-Silent mission system that turns AI coding agents (Claude Code, Cursor, Copilot) into autonomous executors. Install it, give it a brief, and your agent stops asking questions and starts building.
+Silent mission system that turns AI coding agents (Claude Code, Cursor, Copilot) into autonomous executors with persistent memory. Install it, give it a brief, and your agent stops asking questions and starts building.
 
 ## Quick Start
 
 ```bash
 # Install (silent — creates .ai-guide/, CLAUDE.md, hooks automatically)
-npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.1.0/npc-guide-0.1.0.tgz
+npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.2.1/npc-guide-0.2.1.tgz
 
 # Initialize with your brief
 npx npc-guide init "Build a SaaS dashboard with Next.js and Supabase"
@@ -18,12 +18,17 @@ npx npc-guide init "Build a SaaS dashboard with Next.js and Supabase"
 
 That's it. The agent reads the mission map and executes autonomously.
 
-## What It Does
+## How It Works
 
-1. **Silent install** — postinstall creates `.ai-guide/`, wires Claude Code hooks, writes `CLAUDE.md` and `.cursorrules`
+1. **Silent install** — postinstall scans your project, seeds memory with deps + structure, wires Claude Code hooks, writes `CLAUDE.md` and `.cursorrules`
 2. **Brief parsing** — detects intent (build, strategy, research, debug, etc.) and generates a mission map
-3. **Agent direction** — your agent reads the missions and executes without asking questions
-4. **Session memory** — every session is archived, every decision logged, agent picks up where it left off
+3. **Agent builds** — your agent reads the missions and executes. No bookkeeping required — just build.
+4. **Hooks observe** — SessionEnd hook runs `git diff`, records what changed, auto-advances missions, writes session summary into memory
+5. **Next session** — SessionStart hook injects full context. Agent continues where it left off.
+
+```
+⚡ NPC Guide — Mission 2: Core Loop | Session 4 | 12 memories active
+```
 
 ## 7 Intent Types
 
@@ -41,17 +46,17 @@ That's it. The agent reads the mission map and executes autonomously.
 
 | Agent | Integration |
 |---|---|
-| **Claude Code** | SessionStart/End hooks + CLAUDE.md (full lifecycle) |
+| **Claude Code** | SessionStart/End hooks + CLAUDE.md (full lifecycle with git observation) |
 | **Cursor** | .cursorrules |
 | **Copilot / Others** | CLAUDE.md (any agent that reads project markdown) |
 
 ## No API Required
 
-Default parser is pure regex — works offline, instantly. LLM parsing (OpenAI/Anthropic/OpenRouter) is optional for richer results.
+Zero runtime dependencies. Everything runs locally — regex parsing, TF-IDF memory retrieval, git diffing. No API calls needed.
 
 ## Docs
 
-Full documentation, architecture, and live test results: [github.com/Abhipaddy8/npc-guide-ai](https://github.com/Abhipaddy8/npc-guide-ai)
+Full documentation, architecture, and changelog: [github.com/Abhipaddy8/npc-guide-ai](https://github.com/Abhipaddy8/npc-guide-ai)
 
 ## License
 
