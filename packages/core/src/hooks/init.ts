@@ -12,6 +12,8 @@
  * After this, the hooks handle everything silently.
  */
 
+import { access } from 'fs/promises';
+import { join } from 'path';
 import { parseBrief } from '../brief-parser/index.js';
 import { buildMissionMap } from '../mission-architect/index.js';
 import { DocWriter } from '../memory/doc-writer.js';
@@ -25,6 +27,20 @@ const args = rawArgs[0] === 'init' ? rawArgs.slice(1) : rawArgs;
 const brief = args.join(' ');
 
 async function init() {
+  // Guard — must be inside a project
+  try {
+    await access(join(projectRoot, 'package.json'));
+  } catch {
+    console.log('');
+    console.log('  Run this inside a project folder (one with a package.json).');
+    console.log('');
+    console.log('  Example:');
+    console.log('    cd my-app');
+    console.log('    npx npc-guide init "Build a real-time chat with Supabase"');
+    console.log('');
+    process.exit(1);
+  }
+
   if (!brief) {
     console.log('Usage: npx npc-guide init "your project brief here"');
     console.log('');
@@ -32,6 +48,19 @@ async function init() {
     console.log('  npx npc-guide init "Build a SaaS dashboard with Next.js, Supabase, and Stripe"');
     console.log('  npx npc-guide init "Fix the broken webhook handler for payment processing"');
     console.log('  npx npc-guide init "Design the API architecture for a multi-tenant platform"');
+    process.exit(1);
+  }
+
+  // Validate brief quality — reject vague/short briefs
+  const wordCount = brief.trim().split(/\s+/).length;
+  if (wordCount < 4) {
+    console.log('');
+    console.log('  That brief is too short. NPC Guide needs more to work with.');
+    console.log('');
+    console.log('  Tell me what you\'re building and with what stack. Example:');
+    console.log('  npx npc-guide init "Build a real-time chat app with Next.js and Supabase"');
+    console.log('  npx npc-guide init "Fix the auth flow — login redirects to 404"');
+    console.log('');
     process.exit(1);
   }
 

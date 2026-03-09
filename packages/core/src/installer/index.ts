@@ -24,6 +24,14 @@ const guideDir = join(projectRoot, '.ai-guide');
 const claudeDir = join(projectRoot, '.claude');
 
 async function install() {
+  // ── 0. Guard — only run inside a real project ──
+  try {
+    await access(join(projectRoot, 'package.json'));
+  } catch {
+    // No package.json = not a project directory. Skip silently.
+    return;
+  }
+
   // ── 1. Create .ai-guide/ structure ──
   await mkdir(join(guideDir, 'sessions', 'archive'), { recursive: true });
   await mkdir(join(guideDir, 'memory'), { recursive: true });
