@@ -14,6 +14,18 @@ Every time you start a coding session with an AI agent, it starts from zero. It 
 
 NPC Guide fixes this with two hooks and a memory system. The agent builds. The hooks observe and record. Next session, the agent has full context automatically.
 
+## Built with NPC Guide
+
+**[rag-starter](https://github.com/Abhipaddy8/rag-starter)** — Full RAG chatbot with citations, scope enforcement, and pgvector search. Built in one hour from a single brief.
+
+- One brief → 4 missions generated → 4 missions completed in one session
+- Agent made 14 architectural decisions autonomously (pgvector over Pinecone, HNSW over IVFFlat, OpenRouter fallback when OpenAI quota ran out)
+- Self-debugged mid-build: lowered similarity threshold from 0.7 to 0.2 when embeddings produced lower cosine scores
+- Evolved the project into an open-source starter kit with `rag.config.ts` for one-file customization
+- Live demo: [rag-starter.vercel.app](https://rag-starter.vercel.app)
+
+---
+
 ## Install
 
 ```bash
