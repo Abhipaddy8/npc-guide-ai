@@ -108,8 +108,11 @@ function inferStack(text: string): InferredStack {
     extras: [],
   };
 
+  const matchedSignals = new Set<string>();
+
   for (const [signal, overrides] of Object.entries(STACK_SIGNALS)) {
     if (text.includes(signal)) {
+      matchedSignals.add(signal);
       if (overrides.language) stack.language = overrides.language;
       if (overrides.framework) stack.framework = overrides.framework;
       if (overrides.database) stack.database = overrides.database;
@@ -117,6 +120,20 @@ function inferStack(text: string): InferredStack {
       if (overrides.styling) stack.styling = overrides.styling;
       if (overrides.deployment) stack.deployment = overrides.deployment;
       if (overrides.extras) stack.extras.push(...overrides.extras);
+    }
+  }
+
+  // Collect unmatched dep names — the agent interprets what they mean
+  const depsMatch = text.match(/\(deps:\s*(.+?)\)/);
+  if (depsMatch) {
+    const depNames = depsMatch[1].split(',').map(d => d.trim()).filter(Boolean);
+    for (const dep of depNames) {
+      const depLower = dep.toLowerCase();
+      // Skip if already matched by a signal, or if it's a dev tool
+      const alreadyMatched = [...matchedSignals].some(s => depLower.includes(s));
+      if (!alreadyMatched && !stack.extras.includes(dep)) {
+        stack.extras.push(dep);
+      }
     }
   }
 

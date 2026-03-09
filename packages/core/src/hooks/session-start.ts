@@ -3,13 +3,17 @@
 /**
  * SessionStart hook — runs silently when a coding agent session begins.
  *
- * 1. Syncs decisions.md + missions.md into memory (catches up from crashed sessions)
- * 2. Retrieves relevant memories using cosine similarity (or keyword fallback)
- * 3. Injects focused context into agent via stdout
+ * 1. Takes a snapshot (git SHA + timestamp) so SessionEnd can diff
+ * 2. Syncs any records from previous sessions into memory
+ * 3. Retrieves relevant memories via TF-IDF
+ * 4. Injects focused context into agent via stdout
+ *
+ * The agent's only job is to build. This hook gives it context.
  */
 
-import { readFile, access } from 'fs/promises';
+import { readFile, writeFile, mkdir, access, readdir } from 'fs/promises';
 import { join } from 'path';
+import { execSync } from 'child_process';
 import { MemorySystem } from '../memory/index.js';
 import { retrieveRelevantMemories } from '../memory/retriever.js';
 import { DEFAULT_CONFIG } from '../types.js';
@@ -25,6 +29,25 @@ async function sessionStart() {
     return;
   }
 
+  // ── 0. Take snapshot for SessionEnd to diff against ──
+  await mkdir(join(guideDir, 'sessions'), { recursive: true });
+  const snapshot: Record<string, string> = {
+    timestamp: new Date().toISOString(),
+    sha: '',
+    trackedFiles: '',
+  };
+
+  try {
+    snapshot.sha = execSync('git rev-parse HEAD', { cwd: projectRoot, encoding: 'utf-8' }).trim();
+  } catch {}
+
+  try {
+    snapshot.trackedFiles = execSync('git status --porcelain', { cwd: projectRoot, encoding: 'utf-8' }).trim();
+  } catch {}
+
+  await writeFile(join(guideDir, 'sessions', '.snapshot'), JSON.stringify(snapshot));
+
+  // ── 1. Build context to inject ──
   const sections: string[] = [];
 
   sections.push('# NPC Guide — Session Context');
@@ -46,7 +69,7 @@ async function sessionStart() {
     sections.push('');
   } catch {}
 
-  // ── Load decisions (last 20 entries max) ──
+  // ── Load decisions (last 80 lines) ──
   try {
     const decisions = await readFile(join(guideDir, 'decisions.md'), 'utf-8');
     const lines = decisions.split('\n');
@@ -55,7 +78,7 @@ async function sessionStart() {
     sections.push('');
   } catch {}
 
-  // ── Sync memory from docs (catches up from crashed/cut sessions) ──
+  // ── Sync memory from previous session observations ──
   const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
   try {
     await memory.init();
@@ -69,10 +92,8 @@ async function sessionStart() {
     const allMemories = memory.getAll().filter(m => m.status !== 'archived');
 
     if (allMemories.length > 0 && missionGoal) {
-      // TF-IDF cosine similarity — pure math, no API
       const relevant = retrieveRelevantMemories(missionGoal, allMemories, 10, 0.05);
 
-      // Record hits for scoring
       for (const r of relevant) {
         await memory.recordHit(r.item.id);
       }
@@ -85,7 +106,6 @@ async function sessionStart() {
         sections.push('');
       }
     } else if (allMemories.length > 0) {
-      // No mission goal to query — dump active memories
       const active = memory.getActive();
       if (active.length > 0) {
         sections.push('## Active Memory');
@@ -108,17 +128,28 @@ async function sessionStart() {
     }
   } catch {}
 
-  // ── Mission instructions ──
+  // ── Mission instructions — NO file-writing demands ──
   sections.push('## Your Orders');
   sections.push('You are a coding agent under NPC Guide direction. START EXECUTING IMMEDIATELY.');
   sections.push('- Find the ACTIVE mission (▶) above. That is your ONLY job right now.');
   sections.push('- DO NOT ask the user "should I start?" or "want me to begin?" — JUST DO IT.');
   sections.push('- Do NOT ask questions you can infer from the architecture and decisions docs.');
-  sections.push('- Log every architectural decision in .ai-guide/decisions.md.');
-  sections.push('- When the mission is complete, update .ai-guide/missions.md: mark current ✅, mark next ▶️.');
-  sections.push('- Write a session summary to .ai-guide/sessions/latest.json before stopping.');
   sections.push('- You are an executor, not a chatbot. The mission map is your permission to act.');
   sections.push('');
+
+  // ── Status line to stderr — developer sees it, agent doesn't ──
+  const activeMission = extractActiveMissionInfo(missionsContent);
+  let sessionCount = 1;
+  try {
+    const archived = await readdir(join(guideDir, 'sessions', 'archive'));
+    sessionCount = archived.filter(f => f.endsWith('.json')).length + 1;
+  } catch {}
+  const memoryCount = memory.getActive().length;
+
+  const missionLabel = activeMission
+    ? `Mission ${activeMission.number}: ${activeMission.name}`
+    : 'No active mission';
+  process.stderr.write(`⚡ NPC Guide — ${missionLabel} | Session ${sessionCount} | ${memoryCount} memories active\n`);
 
   // Output to stdout — this gets injected into the agent's context
   process.stdout.write(sections.join('\n'));
@@ -134,6 +165,22 @@ function extractActiveMissionGoal(content: string): string | null {
     if (line.includes('▶')) {
       const match = line.match(/—\s*(.+?)$/);
       return match ? match[1].trim() : null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract active mission number and name for the status line.
+ */
+function extractActiveMissionInfo(content: string): { number: string; name: string } | null {
+  if (!content) return null;
+  const lines = content.split('\n');
+  for (const line of lines) {
+    if (line.includes('▶')) {
+      // Matches: "- ▶️ **1 — Foundation** — goal text"
+      const match = line.match(/\*\*(\d+)\s*—\s*(.+?)\*\*/);
+      if (match) return { number: match[1], name: match[2].trim() };
     }
   }
   return null;

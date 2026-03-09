@@ -1,0 +1,8 @@
+# NPC Guide — Mission System
+# This project uses NPC Guide for structured AI-driven development.
+# Read .ai-guide/missions.md for the current mission map.
+# Read .ai-guide/architecture.md for stack decisions.
+# Read .ai-guide/decisions.md for architectural choices and reasoning.
+# Execute the ACTIVE mission. Do not ask questions you can infer.
+# Log every architectural decision in .ai-guide/decisions.md.
+# When a mission is complete, update .ai-guide/missions.md.

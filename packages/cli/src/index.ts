@@ -5,13 +5,11 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
   NpcGuide,
-  OpenAIProvider,
   MissionMap,
   getCurrentMission,
   formatInstructionForAgent,
   generateInstruction,
 } from 'npc-guide';
-import type { LLMProvider } from 'npc-guide';
 
 // ── Load .env manually (no dotenv dependency) ──────────────
 function loadEnv() {
@@ -107,26 +105,10 @@ async function main() {
     output: process.stdout,
   });
 
-  // Check for OpenRouter key
-  const apiKey = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
-  let llm: LLMProvider | undefined;
-
-  if (apiKey) {
-    const baseUrl = process.env.OPENROUTER_API_KEY
-      ? 'https://openrouter.ai/api/v1'
-      : 'https://api.openai.com/v1';
-    const model = process.env.NPC_GUIDE_MODEL || 'google/gemini-2.0-flash-001';
-    llm = new OpenAIProvider(apiKey, model, baseUrl);
-    console.log(`${c.green}  ✓ LLM connected${c.reset} ${c.dim}(${model})${c.reset}`);
-  } else {
-    console.log(`${c.yellow}  ⚠ No API key found — using offline regex parser${c.reset}`);
-    console.log(`${c.dim}  Set OPENROUTER_API_KEY or OPENAI_API_KEY for LLM-powered parsing${c.reset}`);
-  }
-
   const projectRoot = process.env.NPC_GUIDE_PROJECT || process.cwd();
   console.log(`${c.dim}  Project root: ${projectRoot}${c.reset}\n`);
 
-  const guide = new NpcGuide({ projectRoot }, llm);
+  const guide = new NpcGuide({ projectRoot });
   await guide.init();
 
   // ── Brief input ─────────────────────────────────────────

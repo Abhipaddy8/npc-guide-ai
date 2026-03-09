@@ -91,6 +91,26 @@
       "status": "new",
       "createdAt": "2026-03-08T16:39:27.091Z",
       "lastHitAt": null
+    },
+    {
+      "id": "3a528e78-2002-43be-b4c1-7109811ea6a8",
+      "content": "Project: rebuild-the-init. Intent: build. Stack: TypeScript/none. DB: none",
+      "category": "architecture",
+      "sessionsActive": 0,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-09T05:26:01.106Z",
+      "lastHitAt": null
+    },
+    {
+      "id": "be816c2a-01b4-4fca-9f7c-c7b66c0e07e0",
+      "content": "Project: redesign-the-init. Intent: build. Stack: JavaScript/none. DB: none. Scan: JavaScript",
+      "category": "architecture",
+      "sessionsActive": 0,
+      "cosineSimilarityHits": 0,
+      "status": "new",
+      "createdAt": "2026-03-09T05:28:02.899Z",
+      "lastHitAt": null
     }
   ]
 }

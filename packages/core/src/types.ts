@@ -136,8 +136,6 @@ export interface SessionLog {
 export interface GuideConfig {
   projectRoot: string;
   guideDir: string;
-  llmProvider: 'openai' | 'anthropic';
-  llmModel: string;
   maxMissions: number;
   memoryWindowSize: number;
 }
@@ -145,8 +143,6 @@ export interface GuideConfig {
 export const DEFAULT_CONFIG: GuideConfig = {
   projectRoot: process.cwd(),
   guideDir: '.ai-guide',
-  llmProvider: 'openai',
-  llmModel: 'gpt-4o-mini',
   maxMissions: 8,
   memoryWindowSize: 15,
 };

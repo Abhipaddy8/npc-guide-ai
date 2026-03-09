@@ -79,25 +79,19 @@ async function init() {
   }
 
   // ── Step 3: Merge scan context into the brief ──
-  // Enrich the brief with detected stack so the parser doesn't have to guess
+  // Enrich the brief with dep names so the brief parser can pick up signals
   let enrichedBrief = brief;
-  if (scan.stack.framework) enrichedBrief += ` with ${scan.stack.framework}`;
-  if (scan.stack.database) enrichedBrief += ` and ${scan.stack.database}`;
-  if (scan.stack.auth) enrichedBrief += ` using ${scan.stack.auth}`;
+  if (scan.deps.length > 0) {
+    enrichedBrief += ` (deps: ${scan.deps.join(', ')})`;
+  }
 
   const config = { ...DEFAULT_CONFIG, projectRoot };
 
   // Parse the brief
   const parsed = parseBrief(enrichedBrief);
 
-  // Override stack with scan results (scan is ground truth, brief is supplementary)
-  if (scan.stack.language) parsed.stack.language = scan.stack.language;
-  if (scan.stack.framework) parsed.stack.framework = scan.stack.framework;
-  if (scan.stack.database) parsed.stack.database = scan.stack.database;
-  if (scan.stack.auth) parsed.stack.auth = scan.stack.auth;
-  if (scan.stack.styling) parsed.stack.styling = scan.stack.styling;
-  if (scan.stack.deployment) parsed.stack.deployment = scan.stack.deployment;
-  if (scan.stack.extras.length > 0) parsed.stack.extras = scan.stack.extras;
+  // Override language with scan result (ground truth)
+  if (scan.language) parsed.stack.language = scan.language;
 
   // Build mission map
   const map = buildMissionMap(parsed);
@@ -108,18 +102,27 @@ async function init() {
   await docs.writeArchitecture(parsed);
   await docs.writeMissionMap(map);
 
-  // Initialize memory
+  // Initialize memory — raw facts, agent interprets
   const memory = new MemorySystem(config);
   await memory.init();
-  await memory.addMemory(
-    `Project: ${parsed.projectName}. Intent: ${parsed.intent}. Stack: ${parsed.stack.language}/${parsed.stack.framework || 'none'}. DB: ${parsed.stack.database || 'none'}. Scan: ${scan.summary}`,
-    'architecture'
-  );
+
+  // Project identity
+  await memory.addMemory(`Project: ${parsed.projectName}. Intent: ${parsed.intent}`, 'architecture');
+
+  // Dependencies — all of them, one entry
+  if (scan.deps.length > 0) {
+    await memory.addMemory(`Dependencies: ${scan.deps.join(', ')}`, 'architecture');
+  }
+
+  // Structure — folders, configs, file counts, one entry
+  if (scan.structure.length > 0) {
+    await memory.addMemory(`Structure: ${scan.structure.join(', ')}`, 'context');
+  }
 
   // ── Output ──
   console.log(`⚡ NPC Guide initialized — "${parsed.projectName}"`);
-  if (scan.summary && scan.summary !== 'Empty project') {
-    console.log(`   Stack: ${scan.summary} (detected)`);
+  if (scan.language) {
+    console.log(`   Language: ${scan.language} | ${scan.deps.length} dependencies`);
   }
   console.log(`   Intent: ${parsed.intent} | ${map.totalMissions} missions`);
   console.log('');

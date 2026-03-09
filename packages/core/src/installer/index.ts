@@ -17,7 +17,11 @@
  */
 
 import { readFile, writeFile, mkdir, access } from 'fs/promises';
-import { join, relative } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { scanProject } from '../project-scanner/index.js';
+import { MemorySystem } from '../memory/index.js';
+import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.env.INIT_CWD || process.cwd();
 const guideDir = join(projectRoot, '.ai-guide');
@@ -46,6 +50,28 @@ async function install() {
       windowSize: 15,
       items: [],
     }, null, 2));
+  }
+
+  // ── 1b. Scan project and seed memory with raw facts ──
+  try {
+    const scan = await scanProject(projectRoot);
+    const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
+    await memory.init();
+
+    // Only seed if memory is empty (first install)
+    if (memory.getAll().length === 0) {
+      // Entry 1: All dependencies — agent interprets what they mean
+      if (scan.deps.length > 0) {
+        await memory.addMemory(`Dependencies: ${scan.deps.join(', ')}`, 'architecture');
+      }
+
+      // Entry 2: Project structure — folders, configs, file counts
+      if (scan.structure.length > 0) {
+        await memory.addMemory(`Structure: ${scan.structure.join(', ')}`, 'context');
+      }
+    }
+  } catch {
+    // Silent — scanning is best-effort during install
   }
 
   // ── 2. Wire Claude Code hooks ──
@@ -135,9 +161,11 @@ async function install() {
 }
 
 function getHookScriptPath(): string {
-  // Resolve to the installed package's dist/hooks/ directory
-  const packageHooks = join(projectRoot, 'node_modules', 'npc-guide', 'dist', 'hooks');
-  return packageHooks;
+  // Resolve hooks path relative to this file — works for both npm registry and local installs
+  // This file is at dist/installer/index.js → walk up to dist/hooks/
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  return join(__dirname, '..', 'hooks');
 }
 
 function getCursorRules(): string {
@@ -145,10 +173,9 @@ function getCursorRules(): string {
 # This project uses NPC Guide for structured AI-driven development.
 # Read .ai-guide/missions.md for the current mission map.
 # Read .ai-guide/architecture.md for stack decisions.
-# Read .ai-guide/decisions.md for architectural choices and reasoning.
-# Execute the ACTIVE mission. Do not ask questions you can infer.
-# Log every architectural decision in .ai-guide/decisions.md.
-# When a mission is complete, update .ai-guide/missions.md.
+# Read .ai-guide/decisions.md for past decisions — avoid contradicting them.
+# Execute the ACTIVE mission (▶). Do not ask questions you can infer.
+# Just build. Memory and mission tracking happen automatically via hooks.
 `;
 }
 
@@ -157,20 +184,23 @@ function getClaudeMdSection(): string {
 
 This project is driven by NPC Guide. You are the coding agent. The Guide is your director.
 
-## CRITICAL RULES — Follow these exactly
-1. On session start, read \`.ai-guide/missions.md\` and \`.ai-guide/architecture.md\` FIRST.
-2. Find the ACTIVE mission (marked ▶). That is your ONLY job right now.
-3. **START EXECUTING IMMEDIATELY.** Do NOT ask the user "should I start?" or "want me to begin?" — just do it.
-4. Do NOT ask questions you can infer from context. Read the architecture, read the decisions log, infer.
-5. Log every architectural decision to \`.ai-guide/decisions.md\` with format: \`### [date] Decision: X / Reason: Y\`
-6. When the mission is complete, update \`.ai-guide/missions.md\`: mark current ✅, mark next ▶️.
-7. Write a brief session summary to \`.ai-guide/sessions/latest.json\` before stopping.
-8. Read \`.ai-guide/decisions.md\` for past decisions — NEVER contradict a previous decision without logging why.
+## How this works
+- NPC Guide hooks run automatically at session start and end.
+- Session start: injects your mission, architecture, and memory context.
+- Session end: observes what you changed (via git diff) and records it automatically.
+- You do NOT need to write to any .ai-guide/ files. Just build.
+
+## Your rules
+1. The ACTIVE mission (marked ▶) is your ONLY job right now.
+2. **START EXECUTING IMMEDIATELY.** Do NOT ask "should I start?" — just do it.
+3. Do NOT ask questions you can infer from the architecture and decisions docs.
+4. Read \`.ai-guide/decisions.md\` for past decisions — avoid contradicting them without good reason.
+5. Focus on building. Memory and mission tracking happen automatically.
 
 ## What you are NOT
 - You are NOT waiting for permission. The mission map IS your permission.
 - You are NOT a chatbot. You are an executor.
-- You are NOT asking "what should I do?" — the mission tells you what to do.
+- You are NOT responsible for bookkeeping. The hooks handle that.
 `;
 }
 

@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/equipp/npc-guide-ai/node_modules/@npc-guide/core/dist/hooks/session-start.js"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/equipp/npc-guide-ai/node_modules/@npc-guide/core/dist/hooks/session-end.js"
+          }
+        ]
+      }
+    ]
+  }
+}

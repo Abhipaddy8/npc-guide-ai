@@ -142,15 +142,11 @@ export class MemorySystem {
   }
 
   /**
-   * Check if a memory with similar content already exists (fuzzy match).
+   * Check if a memory with identical content already exists (exact match after normalization).
    */
   private hasMemory(content: string): boolean {
     const norm = normalize(content);
-    return this.table.items.some(item => {
-      const existing = normalize(item.content);
-      // Check if the core content overlaps (substring match on normalized text)
-      return existing.includes(norm.slice(0, 60)) || norm.includes(existing.slice(0, 60));
-    });
+    return this.table.items.some(item => normalize(item.content) === norm);
   }
 }
 

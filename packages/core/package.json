@@ -1,6 +1,6 @@
 {
   "name": "npc-guide",
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "Your repo remembers everything. Silent mission system for AI coding agents.",
   "type": "module",
   "main": "dist/index.js",
@@ -42,9 +42,7 @@
   },
   "author": "Abhishek Padmanabhan",
   "license": "MIT",
-  "dependencies": {
-    "openai": "^4.0.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.4.0",
     "@types/node": "^20.0.0"
