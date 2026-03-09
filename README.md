@@ -22,7 +22,7 @@ NPC Guide fixes this with two hooks and a memory system. The agent builds. The h
 - Agent made 14 architectural decisions autonomously (pgvector over Pinecone, HNSW over IVFFlat, OpenRouter fallback when OpenAI quota ran out)
 - Self-debugged mid-build: lowered similarity threshold from 0.7 to 0.2 when embeddings produced lower cosine scores
 - Evolved the project into an open-source starter kit with `rag.config.ts` for one-file customization
-- Live demo: [rag-starter.vercel.app](https://rag-starter.vercel.app)
+- [Live demo](https://rag-starter-one.vercel.app/) — ask it anything about Notion's help docs. It retrieves relevant chunks via pgvector, generates an answer with GPT-4o-mini, cites the source articles, and refuses to answer anything outside scope.
 
 ---
 
