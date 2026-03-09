@@ -7,6 +7,8 @@
 
 import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
+import { MemorySystem } from '../memory/index.js';
+import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.cwd();
 const guideDir = join(projectRoot, '.ai-guide');
@@ -45,6 +47,14 @@ async function sessionEnd() {
 
   // Update latest
   await writeFile(join(sessionsDir, 'latest.json'), JSON.stringify(session, null, 2));
+
+  // Safety net: sync any decisions/missions into memory
+  // Catches everything even if the session was cut off unexpectedly
+  try {
+    const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
+    await memory.init();
+    await memory.syncFromDocs(guideDir);
+  } catch {}
 }
 
 sessionEnd().catch(() => {

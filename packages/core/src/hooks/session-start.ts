@@ -2,13 +2,17 @@
 
 /**
  * SessionStart hook — runs silently when a coding agent session begins.
- * Reads .ai-guide/ memory, builds context, outputs to stdout.
- * The agent receives this as injected context.
+ *
+ * 1. Syncs decisions.md + missions.md into memory (catches up from crashed sessions)
+ * 2. Retrieves relevant memories using cosine similarity (or keyword fallback)
+ * 3. Injects focused context into agent via stdout
  */
 
 import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { MemorySystem } from '../memory/index.js';
+import { retrieveRelevantMemories } from '../memory/retriever.js';
+import { OpenAIEmbeddings } from '../memory/embeddings.js';
 import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.cwd();
@@ -19,7 +23,6 @@ async function sessionStart() {
   try {
     await access(guideDir);
   } catch {
-    // No .ai-guide folder — silently exit, no context to inject
     return;
   }
 
@@ -37,35 +40,70 @@ async function sessionStart() {
   } catch {}
 
   // ── Load mission map ──
+  let missionsContent = '';
   try {
-    const missions = await readFile(join(guideDir, 'missions.md'), 'utf-8');
-    sections.push(missions);
+    missionsContent = await readFile(join(guideDir, 'missions.md'), 'utf-8');
+    sections.push(missionsContent);
     sections.push('');
   } catch {}
 
-  // ── Load decisions ──
+  // ── Load decisions (last 20 entries max) ──
   try {
     const decisions = await readFile(join(guideDir, 'decisions.md'), 'utf-8');
-    // Only include last 20 decisions to avoid bloat
     const lines = decisions.split('\n');
     const trimmed = lines.slice(0, 80).join('\n');
     sections.push(trimmed);
     sections.push('');
   } catch {}
 
-  // ── Load active memories ──
+  // ── Sync memory from docs (catches up from crashed/cut sessions) ──
   const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
   try {
     await memory.init();
     await memory.tickSession();
+    await memory.syncFromDocs(guideDir);
+  } catch {}
 
-    const active = memory.getActive();
-    if (active.length > 0) {
-      sections.push('## Active Memory');
-      for (const item of active) {
-        sections.push(`- [${item.category}] ${item.content}`);
+  // ── Retrieve relevant memories ──
+  try {
+    const missionGoal = extractActiveMissionGoal(missionsContent);
+    const allMemories = memory.getAll().filter(m => m.status !== 'archived');
+
+    if (allMemories.length > 0 && missionGoal) {
+      // Try embeddings if API key available
+      let embedder = null;
+      const apiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
+      if (apiKey) {
+        const baseUrl = process.env.OPENROUTER_API_KEY
+          ? 'https://openrouter.ai/api/v1'
+          : 'https://api.openai.com/v1';
+        embedder = new OpenAIEmbeddings(apiKey, 'text-embedding-3-small');
       }
-      sections.push('');
+
+      const relevant = await retrieveRelevantMemories(missionGoal, allMemories, embedder, 10, 0.2);
+
+      // Record hits for scoring
+      for (const r of relevant) {
+        await memory.recordHit(r.item.id);
+      }
+
+      if (relevant.length > 0) {
+        sections.push('## Relevant Memory');
+        for (const r of relevant) {
+          sections.push(`- [${r.item.category}] ${r.item.content}`);
+        }
+        sections.push('');
+      }
+    } else if (allMemories.length > 0) {
+      // No mission goal to query — dump active memories
+      const active = memory.getActive();
+      if (active.length > 0) {
+        sections.push('## Active Memory');
+        for (const item of active) {
+          sections.push(`- [${item.category}] ${item.content}`);
+        }
+        sections.push('');
+      }
     }
   } catch {}
 
@@ -76,11 +114,6 @@ async function sessionStart() {
     if (session.summary) {
       sections.push('## Last Session');
       sections.push(session.summary);
-      sections.push('');
-    }
-    if (session.decisions?.length > 0) {
-      sections.push('### Decisions from last session');
-      session.decisions.forEach((d: string) => sections.push(`- ${d}`));
       sections.push('');
     }
   } catch {}
@@ -99,6 +132,21 @@ async function sessionStart() {
 
   // Output to stdout — this gets injected into the agent's context
   process.stdout.write(sections.join('\n'));
+}
+
+/**
+ * Extract the active mission's goal from missions.md content.
+ */
+function extractActiveMissionGoal(content: string): string | null {
+  if (!content) return null;
+  const lines = content.split('\n');
+  for (const line of lines) {
+    if (line.includes('▶')) {
+      const match = line.match(/—\s*(.+?)$/);
+      return match ? match[1].trim() : null;
+    }
+  }
+  return null;
 }
 
 sessionStart().catch(() => {

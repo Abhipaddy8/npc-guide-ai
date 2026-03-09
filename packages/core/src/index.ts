@@ -9,6 +9,8 @@ export { cosineSimilarity, searchMemories, OpenAIEmbeddings } from './memory/emb
 export type { EmbeddingProvider, ScoredMemory } from './memory/embeddings.js';
 export { DocWriter } from './memory/doc-writer.js';
 export { scanProject, formatScanOutput } from './project-scanner/index.js';
+export { retrieveRelevantMemories } from './memory/retriever.js';
+export type { RetrievalResult } from './memory/retriever.js';
 export type { ProjectScan } from './project-scanner/index.js';
 export { SessionInjector } from './session-injector/index.js';
 export { generateInstruction, formatInstructionForAgent } from './agent-instructor/index.js';
