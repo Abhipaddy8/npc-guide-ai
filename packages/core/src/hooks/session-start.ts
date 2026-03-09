@@ -3,12 +3,15 @@
 /**
  * SessionStart hook — runs silently when a coding agent session begins.
  *
- * 1. Takes a snapshot (git SHA + timestamp) so SessionEnd can diff
- * 2. Syncs any records from previous sessions into memory
- * 3. Retrieves relevant memories via TF-IDF
- * 4. Injects focused context into agent via stdout
+ * Two modes:
+ *   FIRST SESSION: brief.md exists, missions.md does not.
+ *     → Inject generation prompt. Agent reads codebase and writes missions.md.
  *
- * The agent's only job is to build. This hook gives it context.
+ *   NORMAL SESSION: missions.md exists.
+ *     → Inject context: architecture, missions, decisions, memory, last session.
+ *     → Agent builds. Hooks observe and record.
+ *
+ * Always: takes a git snapshot so SessionEnd can diff.
  */
 
 import { readFile, writeFile, mkdir, access, readdir } from 'fs/promises';
@@ -22,7 +25,7 @@ const projectRoot = process.cwd();
 const guideDir = join(projectRoot, '.ai-guide');
 
 async function sessionStart() {
-  // Check if .ai-guide exists — if not, this project hasn't been initialized
+  // Check if .ai-guide exists
   try {
     await access(guideDir);
   } catch {
@@ -47,21 +50,108 @@ async function sessionStart() {
 
   await writeFile(join(guideDir, 'sessions', '.snapshot'), JSON.stringify(snapshot));
 
-  // ── 1. Build context to inject ──
+  // ── 1. Check for first-session mode ──
+  const hasBrief = await fileExists(join(guideDir, 'brief.md'));
+  const hasMissions = await fileExists(join(guideDir, 'missions.md'));
+
+  if (hasBrief && !hasMissions) {
+    await firstSession();
+    return;
+  }
+
+  // ── 2. Normal session — inject context ──
+  await normalSession();
+}
+
+// ─── First Session: Agent Generates Missions ───────────────────────────────────
+
+async function firstSession() {
+  const sections: string[] = [];
+
+  sections.push('# NPC Guide — Generate Missions');
+  sections.push('');
+
+  // Load brief
+  try {
+    const brief = await readFile(join(guideDir, 'brief.md'), 'utf-8');
+    sections.push('## Brief');
+    sections.push(brief);
+    sections.push('');
+  } catch {}
+
+  // Load architecture/scan
+  try {
+    const arch = await readFile(join(guideDir, 'architecture.md'), 'utf-8');
+    sections.push('## Project Scan');
+    sections.push(arch);
+    sections.push('');
+  } catch {}
+
+  // Load memory for additional context
+  const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
+  try {
+    await memory.init();
+    const active = memory.getActive();
+    if (active.length > 0) {
+      sections.push('## Known Context');
+      for (const item of active) {
+        sections.push(`- [${item.category}] ${item.content}`);
+      }
+      sections.push('');
+    }
+  } catch {}
+
+  // The generation prompt
+  sections.push('## Your job right now');
+  sections.push('');
+  sections.push('1. Read the brief and project scan above.');
+  sections.push('2. Read the relevant source files to understand what already exists.');
+  sections.push('3. Generate 3-6 specific missions for THIS codebase.');
+  sections.push('4. Write them to `.ai-guide/missions.md` in EXACTLY this format:');
+  sections.push('');
+  sections.push('```');
+  sections.push('# Mission Map');
+  sections.push('');
+  sections.push('- ▶️ **1 — Name** — Specific goal referencing actual files or modules');
+  sections.push('- 🔒 **2 — Name** — Specific goal');
+  sections.push('- 🔒 **3 — Name** — Specific goal');
+  sections.push('```');
+  sections.push('');
+  sections.push('5. Then start executing Mission 1 immediately.');
+  sections.push('');
+  sections.push('Do NOT use generic goals like "build the primary feature" or "scaffold project structure".');
+  sections.push('Reference actual filenames, services, routes, and modules from the project scan.');
+  sections.push('Each mission should describe a concrete change to specific files.');
+  sections.push('');
+
+  // Status line
+  let sessionCount = 1;
+  try {
+    const archived = await readdir(join(guideDir, 'sessions', 'archive'));
+    sessionCount = archived.filter(f => f.endsWith('.json')).length + 1;
+  } catch {}
+  process.stderr.write(`⚡ NPC Guide — First session (generating missions) | Session ${sessionCount}\n`);
+
+  process.stdout.write(sections.join('\n'));
+}
+
+// ─── Normal Session: Inject Context ────────────────────────────────────────────
+
+async function normalSession() {
   const sections: string[] = [];
 
   sections.push('# NPC Guide — Session Context');
   sections.push('You are operating under the NPC Guide mission system. Follow the active mission below.');
   sections.push('');
 
-  // ── Load architecture ──
+  // Load architecture
   try {
     const arch = await readFile(join(guideDir, 'architecture.md'), 'utf-8');
     sections.push(arch);
     sections.push('');
   } catch {}
 
-  // ── Load mission map ──
+  // Load mission map
   let missionsContent = '';
   try {
     missionsContent = await readFile(join(guideDir, 'missions.md'), 'utf-8');
@@ -69,7 +159,7 @@ async function sessionStart() {
     sections.push('');
   } catch {}
 
-  // ── Load decisions (last 80 lines) ──
+  // Load decisions (last 80 lines)
   try {
     const decisions = await readFile(join(guideDir, 'decisions.md'), 'utf-8');
     const lines = decisions.split('\n');
@@ -78,7 +168,7 @@ async function sessionStart() {
     sections.push('');
   } catch {}
 
-  // ── Sync memory from previous session observations ──
+  // Sync memory from previous session observations
   const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
   try {
     await memory.init();
@@ -86,7 +176,7 @@ async function sessionStart() {
     await memory.syncFromDocs(guideDir);
   } catch {}
 
-  // ── Retrieve relevant memories ──
+  // Retrieve relevant memories
   try {
     const missionGoal = extractActiveMissionGoal(missionsContent);
     const allMemories = memory.getAll().filter(m => m.status !== 'archived');
@@ -117,7 +207,7 @@ async function sessionStart() {
     }
   } catch {}
 
-  // ── Load last session summary ──
+  // Load last session summary
   try {
     const latest = await readFile(join(guideDir, 'sessions', 'latest.json'), 'utf-8');
     const session = JSON.parse(latest);
@@ -128,7 +218,7 @@ async function sessionStart() {
     }
   } catch {}
 
-  // ── Mission instructions — NO file-writing demands ──
+  // Mission instructions
   sections.push('## Your Orders');
   sections.push('You are a coding agent under NPC Guide direction. START EXECUTING IMMEDIATELY.');
   sections.push('- Find the ACTIVE mission (▶) above. That is your ONLY job right now.');
@@ -137,7 +227,7 @@ async function sessionStart() {
   sections.push('- You are an executor, not a chatbot. The mission map is your permission to act.');
   sections.push('');
 
-  // ── Status line to stderr — developer sees it, agent doesn't ──
+  // Status line to stderr
   const activeMission = extractActiveMissionInfo(missionsContent);
   let sessionCount = 1;
   try {
@@ -151,13 +241,20 @@ async function sessionStart() {
     : 'No active mission';
   process.stderr.write(`⚡ NPC Guide — ${missionLabel} | Session ${sessionCount} | ${memoryCount} memories active\n`);
 
-  // Output to stdout — this gets injected into the agent's context
   process.stdout.write(sections.join('\n'));
 }
 
-/**
- * Extract the active mission's goal from missions.md content.
- */
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function extractActiveMissionGoal(content: string): string | null {
   if (!content) return null;
   const lines = content.split('\n');
@@ -170,15 +267,11 @@ function extractActiveMissionGoal(content: string): string | null {
   return null;
 }
 
-/**
- * Extract active mission number and name for the status line.
- */
 function extractActiveMissionInfo(content: string): { number: string; name: string } | null {
   if (!content) return null;
   const lines = content.split('\n');
   for (const line of lines) {
     if (line.includes('▶')) {
-      // Matches: "- ▶️ **1 — Foundation** — goal text"
       const match = line.match(/\*\*(\d+)\s*—\s*(.+?)\*\*/);
       if (match) return { number: match[1], name: match[2].trim() };
     }

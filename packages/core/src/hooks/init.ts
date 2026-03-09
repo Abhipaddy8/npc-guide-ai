@@ -3,25 +3,24 @@
 /**
  * npx npc-guide init
  *
- * 1. Scans the project — reads package.json, detects stack, counts files
+ * 1. Scans the project — reads package.json, lists deps, maps folders
  * 2. Shows what it found
  * 3. Asks the user what they want to build / work on
- * 4. Generates missions from scan + user answer
+ * 4. Saves the raw brief + raw scan — the coding agent generates missions
  *
- * Works for fresh AND midway projects.
+ * No template missions. No brief parsing. The agent reads the codebase
+ * and generates specific, actionable missions itself.
  */
 
 import { createInterface } from 'readline';
-import { access, readFile } from 'fs/promises';
+import { writeFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
-import { parseBrief } from '../brief-parser/index.js';
-import { buildMissionMap } from '../mission-architect/index.js';
-import { DocWriter } from '../memory/doc-writer.js';
 import { MemorySystem } from '../memory/index.js';
 import { DEFAULT_CONFIG } from '../types.js';
 import { scanProject, formatScanOutput } from '../project-scanner/index.js';
 
 const projectRoot = process.cwd();
+const guideDir = join(projectRoot, '.ai-guide');
 
 // Check for inline brief (backwards compat: npx npc-guide init "brief")
 const rawArgs = process.argv.slice(2);
@@ -56,10 +55,8 @@ async function init() {
   let brief: string;
 
   if (inlineBrief && inlineBrief.split(/\s+/).length >= 4) {
-    // Inline brief provided and long enough
     brief = inlineBrief;
   } else {
-    // Interactive prompt
     const question = scan.hasFiles
       ? '  What do you want to work on?'
       : '  What are you building?';
@@ -78,63 +75,75 @@ async function init() {
     }
   }
 
-  // ── Step 3: Merge scan context into the brief ──
-  // Enrich the brief with dep names so the brief parser can pick up signals
-  let enrichedBrief = brief;
-  if (scan.hasFiles) {
-    enrichedBrief += ' (existing project, skip foundation)';
+  // ── Step 3: Write raw scan + raw brief ──
+  await mkdir(join(guideDir, 'sessions', 'archive'), { recursive: true });
+  await mkdir(join(guideDir, 'memory'), { recursive: true });
+
+  // architecture.md — raw scan facts, no interpretation
+  const archLines: string[] = [
+    '# Project Scan',
+    '',
+  ];
+
+  if (scan.packageJson?.name) {
+    archLines.push(`**Name**: ${scan.packageJson.name}`);
   }
-  if (scan.deps.length > 0) {
-    enrichedBrief += ` (deps: ${scan.deps.join(', ')})`;
+  if (scan.language) {
+    archLines.push(`**Language**: ${scan.language}`);
   }
 
+  const deps = scan.deps.filter(d => !['typescript', '@types/node'].includes(d));
+  if (deps.length > 0) {
+    archLines.push('', '## Dependencies', deps.join(', '));
+  }
+
+  const folders = scan.structure.filter(s => s.endsWith('/'));
+  const configs = scan.structure.filter(s => !s.endsWith('/') && !s.startsWith('~'));
+  const fileCounts = scan.structure.filter(s => s.startsWith('~'));
+
+  if (folders.length > 0) {
+    archLines.push('', '## Folders', folders.join(', '));
+  }
+  if (configs.length > 0) {
+    archLines.push('', '## Config Files', configs.join(', '));
+  }
+  if (fileCounts.length > 0) {
+    archLines.push('', '## Source Files', fileCounts.join(', '));
+  }
+
+  if (scan.packageJson?.scripts) {
+    const scripts = Object.entries(scan.packageJson.scripts)
+      .map(([k, v]) => `${k}: ${v}`);
+    archLines.push('', '## Scripts', ...scripts);
+  }
+
+  await writeFile(join(guideDir, 'architecture.md'), archLines.join('\n'));
+
+  // brief.md — raw user brief, untouched
+  await writeFile(join(guideDir, 'brief.md'), brief);
+
+  // ── Step 4: Seed memory ──
   const config = { ...DEFAULT_CONFIG, projectRoot };
-
-  // Parse the brief
-  const parsed = parseBrief(enrichedBrief);
-
-  // Override language with scan result (ground truth)
-  if (scan.language) parsed.stack.language = scan.language;
-
-  // Build mission map
-  const map = buildMissionMap(parsed);
-
-  // ── Step 4: Write docs ──
-  const docs = new DocWriter(config);
-  await docs.init();
-  await docs.writeArchitecture(parsed);
-  await docs.writeMissionMap(map);
-
-  // Initialize memory — raw facts, agent interprets
   const memory = new MemorySystem(config);
   await memory.init();
 
-  // Project identity
-  await memory.addMemory(`Project: ${parsed.projectName}. Intent: ${parsed.intent}`, 'architecture');
-
-  // Dependencies — all of them, one entry
-  if (scan.deps.length > 0) {
-    await memory.addMemory(`Dependencies: ${scan.deps.join(', ')}`, 'architecture');
-  }
-
-  // Structure — folders, configs, file counts, one entry
-  if (scan.structure.length > 0) {
-    await memory.addMemory(`Structure: ${scan.structure.join(', ')}`, 'context');
+  if (memory.getAll().length === 0) {
+    if (scan.deps.length > 0) {
+      await memory.addMemory(`Dependencies: ${scan.deps.join(', ')}`, 'architecture');
+    }
+    if (scan.structure.length > 0) {
+      await memory.addMemory(`Structure: ${scan.structure.join(', ')}`, 'context');
+    }
+    await memory.addMemory(`Brief: ${brief}`, 'architecture');
   }
 
   // ── Output ──
-  console.log(`⚡ NPC Guide initialized — "${parsed.projectName}"`);
+  console.log(`⚡ NPC Guide initialized — brief saved.`);
   if (scan.language) {
-    console.log(`   Language: ${scan.language} | ${scan.deps.length} dependencies`);
-  }
-  console.log(`   Intent: ${parsed.intent} | ${map.totalMissions} missions`);
-  console.log('');
-  for (const m of map.missions) {
-    const icon = m.status === 'active' ? '▶' : '○';
-    console.log(`   ${icon} ${m.name}  ${m.goal}`);
+    console.log(`   ${scan.language} | ${scan.deps.length} dependencies | ${fileCounts.join(', ') || 'no source files detected'}`);
   }
   console.log('');
-  console.log('   .ai-guide/ created. Open your coding agent — it will start automatically.');
+  console.log('   Open your coding agent — it will generate missions on first session.');
   console.log('');
 }
 

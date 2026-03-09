@@ -238,9 +238,10 @@ async function tryAdvanceMission(mission: ActiveMission, changes: ChangeSet): Pr
         .replace('▶', '✅');
 
       // Find next locked mission and activate it
+      // Match both 🔒 (with variation selector) and bare lock emoji
       for (let i = mission.lineIndex + 1; i < lines.length; i++) {
-        if (lines[i].includes('🔒')) {
-          lines[i] = lines[i].replace('🔒', '▶️');
+        if (lines[i].includes('🔒') || lines[i].includes('\u{1F512}')) {
+          lines[i] = lines[i].replace(/🔒|🔒️/g, '▶️');
 
           // Update "Current: Mission X" line
           const currentLineIdx = lines.findIndex(l => l.startsWith('**Current**:'));
