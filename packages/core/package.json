@@ -1,6 +1,6 @@
 {
   "name": "npc-guide",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Your repo remembers everything. Silent mission system for AI coding agents.",
   "type": "module",
   "main": "dist/index.js",

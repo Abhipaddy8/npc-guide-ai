@@ -17,7 +17,7 @@ NPC Guide fixes this with two hooks and a memory system. The agent builds. The h
 ## Install
 
 ```bash
-npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.2.1/npc-guide-0.2.1.tgz
+npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.3.0/npc-guide-0.3.0.tgz
 ```
 
 This silently creates:

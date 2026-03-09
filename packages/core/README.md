@@ -8,7 +8,7 @@ Silent mission system that turns AI coding agents (Claude Code, Cursor, Copilot)
 
 ```bash
 # Install (silent — creates .ai-guide/, CLAUDE.md, hooks automatically)
-npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.2.1/npc-guide-0.2.1.tgz
+npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.3.0/npc-guide-0.3.0.tgz
 
 # Initialize with your brief
 npx npc-guide init "Build a SaaS dashboard with Next.js and Supabase"
