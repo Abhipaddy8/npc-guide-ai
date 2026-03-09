@@ -12,7 +12,6 @@ import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { MemorySystem } from '../memory/index.js';
 import { retrieveRelevantMemories } from '../memory/retriever.js';
-import { OpenAIEmbeddings } from '../memory/embeddings.js';
 import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.cwd();
@@ -70,17 +69,8 @@ async function sessionStart() {
     const allMemories = memory.getAll().filter(m => m.status !== 'archived');
 
     if (allMemories.length > 0 && missionGoal) {
-      // Try embeddings if API key available
-      let embedder = null;
-      const apiKey = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
-      if (apiKey) {
-        const baseUrl = process.env.OPENROUTER_API_KEY
-          ? 'https://openrouter.ai/api/v1'
-          : 'https://api.openai.com/v1';
-        embedder = new OpenAIEmbeddings(apiKey, 'text-embedding-3-small');
-      }
-
-      const relevant = await retrieveRelevantMemories(missionGoal, allMemories, embedder, 10, 0.2);
+      // TF-IDF cosine similarity — pure math, no API
+      const relevant = retrieveRelevantMemories(missionGoal, allMemories, 10, 0.05);
 
       // Record hits for scoring
       for (const r of relevant) {

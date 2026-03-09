@@ -1,79 +1,121 @@
 /**
- * Memory Retriever — semantic search with keyword fallback.
- * Tries cosine similarity via embeddings first. If no API key or it fails,
- * falls back to token-overlap keyword scoring.
+ * Memory Retriever — TF-IDF vectors + cosine similarity. Pure math. No API.
+ *
+ * 1. Tokenize query + all memories
+ * 2. Build vocabulary from all documents
+ * 3. Compute TF-IDF vectors for each document
+ * 4. Cosine similarity between query vector and each memory vector
+ * 5. Return top N ranked by score
  */
 
 import { MemoryItem } from '../types.js';
-import { EmbeddingProvider, searchMemories } from './embeddings.js';
 
 export interface RetrievalResult {
   item: MemoryItem;
   score: number;
-  method: 'embedding' | 'keyword';
 }
 
-export async function retrieveRelevantMemories(
+/**
+ * Retrieve memories relevant to a query using TF-IDF cosine similarity.
+ * Zero API calls. Runs locally, instantly.
+ */
+export function retrieveRelevantMemories(
   query: string,
   items: MemoryItem[],
-  embedder: EmbeddingProvider | null,
   topN: number = 10,
-  threshold: number = 0.2
-): Promise<RetrievalResult[]> {
+  threshold: number = 0.05
+): RetrievalResult[] {
   if (items.length === 0) return [];
 
-  // Try embeddings first
-  if (embedder) {
-    try {
-      const results = await searchMemories(query, items, embedder, topN, threshold);
-      if (results.length > 0) {
-        return results.map(r => ({ item: r.item, score: r.score, method: 'embedding' as const }));
-      }
-    } catch {
-      // Embedding API failed — fall through to keyword
-    }
-  }
-
-  // Keyword fallback
-  return keywordSearch(query, items, topN);
-}
-
-function keywordSearch(query: string, items: MemoryItem[], topN: number): RetrievalResult[] {
+  // Tokenize everything
   const queryTokens = tokenize(query);
   if (queryTokens.length === 0) return [];
 
-  const scored: RetrievalResult[] = [];
+  const docTokens = items.map(item => tokenize(item.content));
 
-  for (const item of items) {
-    const itemTokens = tokenize(item.content);
-    if (itemTokens.length === 0) continue;
+  // Build vocabulary (all unique tokens across query + all docs)
+  const vocab = new Set<string>();
+  queryTokens.forEach(t => vocab.add(t));
+  docTokens.forEach(tokens => tokens.forEach(t => vocab.add(t)));
+  const vocabList = [...vocab];
+  const vocabIndex = new Map(vocabList.map((w, i) => [w, i]));
 
-    // Count matching tokens
-    let matches = 0;
-    for (const qt of queryTokens) {
-      if (itemTokens.some(it => it.includes(qt) || qt.includes(it))) {
-        matches++;
+  // Compute IDF: log(N / df) where df = number of docs containing the term
+  const N = items.length + 1; // +1 for query as a document
+  const df = new Map<string, number>();
+  for (const word of vocabList) {
+    let count = 0;
+    if (queryTokens.includes(word)) count++;
+    for (const tokens of docTokens) {
+      if (tokens.includes(word)) count++;
+    }
+    df.set(word, count);
+  }
+
+  const idf = new Map<string, number>();
+  for (const word of vocabList) {
+    idf.set(word, Math.log((N + 1) / ((df.get(word) || 0) + 1)) + 1); // smoothed IDF
+  }
+
+  // Build TF-IDF vector for a token list
+  function toVector(tokens: string[]): number[] {
+    const vec = new Array(vocabList.length).fill(0);
+    const tf = new Map<string, number>();
+    for (const t of tokens) {
+      tf.set(t, (tf.get(t) || 0) + 1);
+    }
+    for (const [word, count] of tf) {
+      const idx = vocabIndex.get(word);
+      if (idx !== undefined) {
+        vec[idx] = (count / tokens.length) * (idf.get(word) || 1);
       }
     }
+    return vec;
+  }
 
-    let score = matches / queryTokens.length;
+  const queryVec = toVector(queryTokens);
 
-    // Boost for category relevance
-    if (query.toLowerCase().includes('decision') && item.category === 'decision') score *= 1.3;
-    if (query.toLowerCase().includes('architect') && item.category === 'architecture') score *= 1.3;
-    if (query.toLowerCase().includes('mission') && item.category === 'progress') score *= 1.3;
+  // Score each memory
+  const scored: RetrievalResult[] = [];
 
-    // Boost for recency (newer items score slightly higher)
-    if (item.status === 'new') score *= 1.1;
+  for (let i = 0; i < items.length; i++) {
+    if (docTokens[i].length === 0) continue;
 
-    if (score > 0.1) {
-      scored.push({ item, score: Math.min(score, 1), method: 'keyword' });
+    const docVec = toVector(docTokens[i]);
+    let score = cosineSimilarity(queryVec, docVec);
+
+    // Category boost
+    const ql = query.toLowerCase();
+    if (ql.includes('decision') && items[i].category === 'decision') score *= 1.2;
+    if (ql.includes('architect') && items[i].category === 'architecture') score *= 1.2;
+    if (ql.includes('mission') && items[i].category === 'progress') score *= 1.2;
+
+    if (score > threshold) {
+      scored.push({ item: items[i], score });
     }
   }
 
   return scored
     .sort((a, b) => b.score - a.score)
     .slice(0, topN);
+}
+
+/**
+ * Cosine similarity between two vectors. Pure math.
+ */
+function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
 }
 
 const STOP_WORDS = new Set([
