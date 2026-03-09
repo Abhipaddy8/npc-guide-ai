@@ -81,6 +81,9 @@ async function init() {
   // ── Step 3: Merge scan context into the brief ──
   // Enrich the brief with dep names so the brief parser can pick up signals
   let enrichedBrief = brief;
+  if (scan.hasFiles) {
+    enrichedBrief += ' (existing project, skip foundation)';
+  }
   if (scan.deps.length > 0) {
     enrichedBrief += ` (deps: ${scan.deps.join(', ')})`;
   }

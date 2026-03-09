@@ -16,7 +16,7 @@ const BUILD_MISSIONS: MissionTemplate[] = [
     type: 'scaffold',
     name: 'Foundation',
     goalTemplate: 'Scaffold project structure, install dependencies, configure tooling',
-    condition: () => true,
+    condition: (b) => !b.raw.includes('existing project'),
   },
   {
     type: 'core-loop',
