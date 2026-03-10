@@ -16,7 +16,19 @@ NPC Guide fixes this with two hooks and a memory system. The agent builds. The h
 
 ## Built with NPC Guide
 
-**[rag-starter](https://github.com/Abhipaddy8/rag-starter)** — Full RAG chatbot with citations, scope enforcement, and pgvector search. Built in one hour from a single brief.
+### [AgentLens](https://github.com/Abhipaddy8/agentlens) — LLM cost optimization proxy with real-time dashboard. Built in one session from a single brief.
+
+- One brief → 7 missions generated → 7 missions completed autonomously
+- Agent only asked for file write permissions — zero architecture questions
+- Built: Node.js proxy (Lambda), 5 DynamoDB tables, React dashboard (9 screens), CloudFormation template, demo environment, 38 integration tests
+- Live-tested with real LLM calls through OpenRouter — 71 calls logged, 22.5% cache hit rate, 234x speed boost on cached queries
+- Made 6 architectural decisions autonomously (DynamoDB over Postgres, CloudFormation over Terraform, OpenAI-only for v1)
+
+![AgentLens Overview](https://raw.githubusercontent.com/Abhipaddy8/agentlens/main/screenshots/overview.png)
+![AgentLens Waste Alert](https://raw.githubusercontent.com/Abhipaddy8/agentlens/main/screenshots/waste-alert.png)
+![AgentLens CFO View](https://raw.githubusercontent.com/Abhipaddy8/agentlens/main/screenshots/cfo-view.png)
+
+### [rag-starter](https://github.com/Abhipaddy8/rag-starter) — Full RAG chatbot with citations, scope enforcement, and pgvector search. Built in one hour from a single brief.
 
 - One brief → 4 missions generated → 4 missions completed in one session
 - Agent made 14 architectural decisions autonomously (pgvector over Pinecone, HNSW over IVFFlat, OpenRouter fallback when OpenAI quota ran out)
