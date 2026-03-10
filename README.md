@@ -43,30 +43,29 @@ This silently creates:
 ## Initialize a Project
 
 ```bash
-npx npc-guide init "Build a real-time chat app with Next.js, Supabase, and Clerk auth"
+npx npc-guide init "Build AgentLens — an LLM cost optimization proxy-as-a-service. Node.js Lambda proxy with kill switch, budget check, semantic caching. DynamoDB backend. React dashboard. CloudFormation deploy."
 ```
 
 Output:
 ```
-⚡ NPC Guide initialized — "build-real-time-chat"
-   Intent: build | 7 missions
+⚡ NPC Guide AI  v0.3.0
 
-   ▶ 1 — Foundation  Scaffold project structure, install dependencies, configure tooling
-   ○ 2 — Core Loop   Build the primary feature that defines the product
-   ○ 3 — Data Layer   Set up database schema, models, and data access
-   ○ 4 — Identity     Implement authentication and authorization
-   ○ 5 — UI Shell     Build the user interface and navigation
-   ○ 6 — Integration  Connect all layers, wire APIs, handle data flow
-   ○ 7 — Ship         Build config, deployment setup, final checks
+  ✓ Brief saved. Open your coding agent — it will generate missions on first session.
 
-   .ai-guide/ created. Your next coding session will pick this up automatically.
+  Next: Open your coding agent in this folder.
+  The agent will read the brief, generate missions, and start building.
 ```
 
 ## Then Just Open Your Agent
 
-Open Claude Code (or Cursor, or any agent). Type "go". The agent reads the mission map, finds the active mission, and starts executing immediately.
+Open Claude Code (or Cursor, or any agent). The session-start hook fires, sees the brief but no missions, and injects a prompt telling the agent to:
 
-**You don't explain anything.** The agent already knows the stack, the plan, and the current mission.
+1. Read the brief
+2. Generate project-specific missions
+3. Write them to `.ai-guide/missions.md`
+4. Start executing Mission 1 immediately
+
+**The agent is the parser.** It reads your brief — any format, any length — and generates missions that reference actual files, services, and modules. No regex guessing. No template matching. The LLM understands your intent perfectly because that's what LLMs do.
 
 ---
 
@@ -75,13 +74,16 @@ Open Claude Code (or Cursor, or any agent). Type "go". The agent reads the missi
 ```
 npm install npc-guide           postinstall scans project, seeds memory, wires hooks
                                 ↓
-npx npc-guide init "brief"      parses brief → detects intent → generates mission map
+npx npc-guide init "brief"      saves raw brief to .ai-guide/brief.md
                                 ↓
 [open coding agent]             SessionStart hook fires:
-                                  - Takes git snapshot (SHA + timestamp)
-                                  - Injects architecture, missions, decisions, memory
-                                  - Prints status line to stderr:
-                                    ⚡ NPC Guide — Mission 2: Core Loop | Session 4 | 12 memories active
+                                  FIRST SESSION (brief exists, no missions):
+                                    - Injects brief + prompt → agent generates missions
+                                  NORMAL SESSION (missions exist):
+                                    - Takes git snapshot (SHA + timestamp)
+                                    - Injects architecture, missions, decisions, memory
+                                    - Prints status line to stderr:
+                                      ⚡ NPC Guide — Mission 2: Core Loop | Session 4 | 12 memories active
                                 ↓
 [agent works]                   Agent just builds. No bookkeeping required.
                                 The agent does NOT write to any .ai-guide/ files.
@@ -99,7 +101,7 @@ npx npc-guide init "brief"      parses brief → detects intent → generates mi
                                   - Agent continues at the correct mission with full context
 ```
 
-**The key insight:** Previous versions asked the agent to write to `.ai-guide/` files — log decisions, update missions, write session summaries. Agents treated those as suggestions and skipped them. v0.2.1 flips this: the hooks observe git diffs and record everything mechanically. The agent's only job is to build.
+**The key insight:** The agent IS the parser. Previous versions used regex to detect intent and generate template missions — this broke on any brief that didn't match exact keyword patterns. Now the raw brief goes straight to the agent, which understands it perfectly and generates project-specific missions. The hooks observe git diffs and record everything mechanically. The agent's only job is to build.
 
 ### The `.ai-guide/` Folder
 
@@ -127,19 +129,20 @@ When triggered, it marks the current mission ✅ and unlocks the next one ▶️
 
 ---
 
-## 7 Intent Types
+## Agent-Generated Missions
 
-NPC Guide detects what you're actually trying to do and generates the right mission sequence:
+The agent reads your brief and generates missions specific to your project. No templates. No keyword matching. The LLM understands what you're building and creates the right sequence — whether that's 3 missions or 8, for a build, a strategy, a debug session, or anything else.
 
-| Intent | Detected When You Say... | Mission Sequence |
-|---|---|---|
-| **build** | "build", "create", "implement" | Foundation → Core Loop → Data Layer → Auth → UI → Integration → Ship |
-| **strategy** | "strategy", "growth", "monetize" | Landscape → Positioning → Growth Engine → Retention → Monetization → Launch Plan |
-| **research** | "research", "investigate", "compare" | Define Scope → Gather → Analyze → Synthesize → Recommend |
-| **design** | "design", "architect", "system design" | Requirements → System Map → Interface Design → Validation |
-| **content** | "write", "blog", "documentation" | Outline → Draft → Polish → Distribute |
-| **ops** | "deploy", "CI/CD", "infrastructure" | Audit → Implement → Test & Verify → Rollout |
-| **debug** | "fix", "broken", "bug", "not working" | Reproduce → Isolate → Fix → Verify |
+Example: a brief about "an LLM cost optimization proxy" generates missions like:
+```
+▶️ 1 — Proxy MVP — Node.js Lambda, /v1/chat/completions endpoint, DynamoDB writes, kill switch
+🔒 2 — Cache + Router — Semantic cache lookup, model routing rules, budget tracking
+🔒 3 — Dashboard — React app, 5 screens, real-time agent spend breakdown
+🔒 4 — Demo Environment — Seed 6 agents, 3 weeks of data, anomaly events
+🔒 5 — CloudFormation — One-click deploy template for customer AWS accounts
+```
+
+Not "Foundation → Core Loop → Data Layer → Ship".
 
 ---
 
@@ -179,8 +182,8 @@ packages/core/src/
 │   ├── session-end.ts         Git diff observation + session record + mission advance
 │   └── init.ts                npx npc-guide init — interactive brief → missions
 ├── project-scanner/index.ts   Reads package.json, lists ALL deps, scans folders 2 deep
-├── brief-parser/index.ts      Regex intent detection + stack inference (+ collects unknown deps)
-├── mission-architect/index.ts  Intent-specific mission templates (7 types, up to 8 missions)
+├── brief-parser/index.ts      Legacy regex parser (kept as fallback, not used in main flow)
+├── mission-architect/index.ts  Legacy template missions (kept as fallback, not used in main flow)
 ├── memory/
 │   ├── index.ts               15-session rolling window with promote/demote/archive lifecycle
 │   ├── retriever.ts           TF-IDF cosine similarity — pure math, no API
@@ -195,7 +198,23 @@ packages/core/src/
 
 ---
 
-## v0.2.1 Changelog
+## Changelog
+
+### v0.4.0
+
+- **Agent-generated missions** — `processBrief()` saves raw brief only. No regex parsing, no template mission generation. The coding agent reads the brief on first session and generates project-specific missions.
+- **Removed brief parser from main flow** — `brief-parser/index.ts` and `mission-architect/index.ts` kept as legacy fallbacks but no longer called by `processBrief()`
+- **CLI simplified** — saves brief and exits. No interactive mission loop. Agent does the thinking.
+- **Fix: intent misdetection** — briefs mentioning "deploy" or "infrastructure" no longer get classified as "ops" when the intent is clearly "build"
+- **Fix: project name extraction** — no more falling back to random words from the brief
+
+### v0.3.0
+
+- First session mode in session-start hook
+- Project scanner seeding memory on install
+- rag-starter showcase
+
+### v0.2.1
 
 - **Observation-based hooks** — SessionEnd observes git diff instead of depending on agent writes
 - **Session snapshots** — SessionStart takes git SHA snapshot for accurate diffing
