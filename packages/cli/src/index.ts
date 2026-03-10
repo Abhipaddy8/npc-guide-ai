@@ -121,70 +121,12 @@ async function main() {
     return;
   }
 
-  console.log(`\n${c.dim}Processing brief...${c.reset}`);
-  const instruction = await guide.processBrief(brief);
-  const map = guide.getMissionMap()!;
+  console.log(`\n${c.dim}Saving brief...${c.reset}`);
+  const result = await guide.processBrief(brief);
 
-  printMissionMap(map);
-  printInstruction(instruction);
-
-  // ── Mission loop ────────────────────────────────────────
-  while (true) {
-    const current = getCurrentMission(map);
-    if (!current) {
-      console.log(`\n${c.green}${c.bold}🏁 All missions complete. Ship it.${c.reset}\n`);
-      break;
-    }
-
-    const action = await prompt(rl, `\n[Mission ${current.id}] > `);
-    const lower = action.toLowerCase();
-
-    if (lower === 'done' || lower === 'complete' || lower === 'next') {
-      const summary = await prompt(rl, '  Summary of what was done: ');
-      const nextInstruction = await guide.completeMission(summary || 'Mission completed');
-      printMissionMap(guide.getMissionMap()!);
-
-      if (getCurrentMission(guide.getMissionMap()!)) {
-        printInstruction(nextInstruction);
-      } else {
-        console.log(`\n${c.green}${c.bold}🏁 All missions complete. Ship it.${c.reset}\n`);
-        break;
-      }
-    } else if (lower === 'map' || lower === 'status') {
-      printMissionMap(guide.getMissionMap()!);
-    } else if (lower.startsWith('decide ') || lower.startsWith('decision ')) {
-      const parts = action.replace(/^(decide|decision)\s+/i, '').split(' because ');
-      const decision = parts[0];
-      const reason = parts[1] || 'No reason given';
-      await guide.logDecision(decision, reason);
-      console.log(`${c.green}  ✓ Decision logged${c.reset}`);
-    } else if (lower === 'memory') {
-      const mem = guide.getMemory().getActive();
-      if (mem.length === 0) {
-        console.log(`${c.dim}  No active memories yet.${c.reset}`);
-      } else {
-        console.log(`\n${c.bold}Active Memories (${mem.length})${c.reset}`);
-        for (const m of mem) {
-          console.log(`  ${c.dim}[${m.category}]${c.reset} ${m.content}`);
-        }
-      }
-    } else if (lower === 'help') {
-      console.log(`
-${c.bold}Commands:${c.reset}
-  ${c.cyan}done${c.reset} / ${c.cyan}complete${c.reset} / ${c.cyan}next${c.reset}  — Complete current mission, advance to next
-  ${c.cyan}map${c.reset} / ${c.cyan}status${c.reset}            — Show mission map
-  ${c.cyan}decide <what> because <why>${c.reset} — Log an architectural decision
-  ${c.cyan}memory${c.reset}                 — Show active memories
-  ${c.cyan}quit${c.reset} / ${c.cyan}exit${c.reset}             — Exit
-`);
-    } else if (lower === 'quit' || lower === 'exit') {
-      console.log(`${c.dim}Session saved. See you next time.${c.reset}`);
-      break;
-    } else {
-      console.log(`${c.dim}  Type 'help' for commands, or 'done' to complete the current mission.${c.reset}`);
-    }
-  }
-
+  console.log(`\n${c.green}${c.bold}  ✓ ${result}${c.reset}\n`);
+  console.log(`${c.cyan}  Next: Open your coding agent in this folder.${c.reset}`);
+  console.log(`${c.cyan}  The agent will read the brief, generate missions, and start building.${c.reset}\n`);
   rl.close();
 }
 

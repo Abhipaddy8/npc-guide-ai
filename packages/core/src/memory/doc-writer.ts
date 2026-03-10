@@ -14,6 +14,10 @@ export class DocWriter {
     await mkdir(this.guideDir, { recursive: true });
   }
 
+  async writeBrief(rawBrief: string): Promise<void> {
+    await writeFile(join(this.guideDir, 'brief.md'), rawBrief);
+  }
+
   async writeArchitecture(brief: ParsedBrief): Promise<void> {
     const lines = [
       '# Architecture',

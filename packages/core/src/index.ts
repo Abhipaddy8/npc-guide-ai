@@ -40,32 +40,10 @@ export class NpcGuide {
   }
 
   async processBrief(rawBrief: string): Promise<string> {
-    const brief = parseBrief(rawBrief);
-    this._brief = brief;
-
-    let missionMap = buildMissionMap(brief);
-    this._missionMap = missionMap;
-
-    const currentMission = getCurrentMission(missionMap);
-    if (!currentMission) {
-      return 'All missions complete.';
-    }
-
-    await this.docs.writeArchitecture(brief);
-    await this.docs.writeMissionMap(missionMap);
-
-    // Seed memory — project identity + raw brief for agent to interpret
-    await this.memory.addMemory(`Project: ${brief.projectName}. Intent: ${brief.intent}`, 'architecture');
-    const stackParts = [brief.stack.language, brief.stack.framework, brief.stack.database, brief.stack.auth, brief.stack.styling, brief.stack.deployment, ...brief.stack.extras].filter(Boolean);
-    if (stackParts.length > 0) {
-      await this.memory.addMemory(`Stack: ${stackParts.join(', ')}`, 'architecture');
-    }
-
-    await this.session.startSession(currentMission.id);
-    const context = await this.session.buildContext(rawBrief);
-
-    const instruction = generateInstruction(currentMission, brief, context);
-    return formatInstructionForAgent(instruction);
+    // Save raw brief only — the coding agent generates missions on first session.
+    // This avoids the regex parser guessing intent/name/features wrong.
+    await this.docs.writeBrief(rawBrief);
+    return 'Brief saved. Open your coding agent — it will generate missions on first session.';
   }
 
   async completeMission(summary: string): Promise<string> {
