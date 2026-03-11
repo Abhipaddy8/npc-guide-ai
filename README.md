@@ -41,14 +41,17 @@ NPC Guide fixes this with two hooks and a memory system. The agent builds. The h
 ## Quick Start
 
 ```bash
-# 1. Create your project (or cd into an existing one)
+# 1. Create a new project folder (replace "my-app" with your project name)
 mkdir my-app && cd my-app
 npm init -y
+
+# Or just cd into an existing project
+cd your-existing-project
 
 # 2. Install NPC Guide
 npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.3.0/npc-guide-0.3.0.tgz
 
-# 3. Tell it what you're building
+# 3. Tell it what you're building (use your own brief)
 npx npc-guide init "Build a real-time chat app with Next.js and Supabase"
 
 # 4. Open your coding agent
