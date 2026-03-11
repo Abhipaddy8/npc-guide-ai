@@ -45,17 +45,17 @@ npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.3.0/
 ```
 
 This silently creates:
-- `.ai-guide/` — memory, sessions, architecture, missions, decisions
+- `.ai-guide/` — empty folder structure (sessions, memory)
 - `.claude/settings.json` — SessionStart/End hooks for Claude Code
 - `CLAUDE.md` — agent instructions (works with any agent that reads project markdown)
 - `.cursorrules` — agent instructions for Cursor
 
-**Zero config. Zero output. Just installs and wires itself in.**
+**Zero config. Zero output. Just installs and wires itself in.** No project scanning happens yet — that waits for `init`.
 
 ## Initialize a Project
 
 ```bash
-npx npc-guide init "Build AgentLens — an LLM cost optimization proxy-as-a-service. Node.js Lambda proxy with kill switch, budget check, semantic caching. DynamoDB backend. React dashboard. CloudFormation deploy."
+npx npc-guide init "Build a real-time chat app with Next.js, Supabase, and Clerk auth"
 ```
 
 Output:
