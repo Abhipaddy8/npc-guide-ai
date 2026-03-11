@@ -19,9 +19,6 @@
 import { readFile, writeFile, mkdir, access } from 'fs/promises';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { scanProject } from '../project-scanner/index.js';
-import { MemorySystem } from '../memory/index.js';
-import { DEFAULT_CONFIG } from '../types.js';
 
 const projectRoot = process.env.INIT_CWD || process.cwd();
 const guideDir = join(projectRoot, '.ai-guide');
@@ -39,40 +36,6 @@ async function install() {
   // ── 1. Create .ai-guide/ structure ──
   await mkdir(join(guideDir, 'sessions', 'archive'), { recursive: true });
   await mkdir(join(guideDir, 'memory'), { recursive: true });
-
-  // Initialize memory table if it doesn't exist
-  const memoryTablePath = join(guideDir, 'memory', 'memory-table.json');
-  try {
-    await access(memoryTablePath);
-  } catch {
-    await writeFile(memoryTablePath, JSON.stringify({
-      version: 1,
-      windowSize: 15,
-      items: [],
-    }, null, 2));
-  }
-
-  // ── 1b. Scan project and seed memory with raw facts ──
-  try {
-    const scan = await scanProject(projectRoot);
-    const memory = new MemorySystem({ ...DEFAULT_CONFIG, projectRoot });
-    await memory.init();
-
-    // Only seed if memory is empty (first install)
-    if (memory.getAll().length === 0) {
-      // Entry 1: All dependencies — agent interprets what they mean
-      if (scan.deps.length > 0) {
-        await memory.addMemory(`Dependencies: ${scan.deps.join(', ')}`, 'architecture');
-      }
-
-      // Entry 2: Project structure — folders, configs, file counts
-      if (scan.structure.length > 0) {
-        await memory.addMemory(`Structure: ${scan.structure.join(', ')}`, 'context');
-      }
-    }
-  } catch {
-    // Silent — scanning is best-effort during install
-  }
 
   // ── 2. Wire Claude Code hooks ──
   await mkdir(claudeDir, { recursive: true });

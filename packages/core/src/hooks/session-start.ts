@@ -54,6 +54,12 @@ async function sessionStart() {
   const hasBrief = await fileExists(join(guideDir, 'brief.md'));
   const hasMissions = await fileExists(join(guideDir, 'missions.md'));
 
+  // Not initialized yet — user needs to run `npx npc-guide init`
+  if (!hasBrief && !hasMissions) {
+    process.stderr.write(`⚡ NPC Guide installed — run 'npx npc-guide init' to get started\n`);
+    return;
+  }
+
   if (hasBrief && !hasMissions) {
     await firstSession();
     return;
