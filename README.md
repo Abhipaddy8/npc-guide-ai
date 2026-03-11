@@ -38,13 +38,32 @@ NPC Guide fixes this with two hooks and a memory system. The agent builds. The h
 
 ---
 
-## Install
+## Quick Start
 
 ```bash
+# 1. Create your project (or cd into an existing one)
+mkdir my-app && cd my-app
+npm init -y
+
+# 2. Install NPC Guide
 npm install https://github.com/Abhipaddy8/npc-guide-ai/releases/download/v0.3.0/npc-guide-0.3.0.tgz
+
+# 3. Tell it what you're building
+npx npc-guide init "Build a real-time chat app with Next.js and Supabase"
+
+# 4. Open your coding agent
+claude
 ```
 
-This silently creates:
+That's it. The agent reads your brief, generates missions, and starts building immediately.
+
+---
+
+## What Each Step Does
+
+### `npm install` — Wires the hooks
+
+Silently creates:
 - `.ai-guide/` — empty folder structure (sessions, memory)
 - `.claude/settings.json` — SessionStart/End hooks for Claude Code
 - `CLAUDE.md` — agent instructions (works with any agent that reads project markdown)
@@ -52,27 +71,23 @@ This silently creates:
 
 **Zero config. Zero output. Just installs and wires itself in.** No project scanning happens yet — that waits for `init`.
 
-## Initialize a Project
+### `npx npc-guide init` — Scans your project and saves your brief
+
+Scans your existing codebase (deps, folders, configs), saves your brief, and seeds memory. You can pass the brief inline or it will prompt you interactively.
 
 ```bash
-npx npc-guide init "Build a real-time chat app with Next.js, Supabase, and Clerk auth"
+# Inline brief
+npx npc-guide init "Add Stripe billing and a settings page"
+
+# Interactive — it asks you
+npx npc-guide init
 ```
 
-Output:
-```
-⚡ NPC Guide AI  v0.3.0
-
-  ✓ Brief saved. Open your coding agent — it will generate missions on first session.
-
-  Next: Open your coding agent in this folder.
-  The agent will read the brief, generate missions, and start building.
-```
-
-## Then Just Open Your Agent
+### Open your agent — Missions get generated
 
 Open Claude Code (or Cursor, or any agent). The session-start hook fires, sees the brief but no missions, and injects a prompt telling the agent to:
 
-1. Read the brief
+1. Read the brief and project scan
 2. Generate project-specific missions
 3. Write them to `.ai-guide/missions.md`
 4. Start executing Mission 1 immediately
